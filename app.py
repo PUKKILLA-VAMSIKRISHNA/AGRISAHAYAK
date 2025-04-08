@@ -30,10 +30,21 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'Vamsi@123')
 
 # Configure the database
-database_url = os.environ.get('DATABASE_URL', "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak")
-if database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+def get_database_url():
+    # First try to get the DATABASE_URL from environment
+    database_url = os.environ.get('DATABASE_URL')
+    
+    # If DATABASE_URL is not set or is invalid, use the default local database
+    if not database_url or not database_url.startswith(('postgres://', 'postgresql://')):
+        database_url = "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
+    
+    # Convert postgres:// to postgresql:// if needed
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    return database_url
+
+app.config["SQLALCHEMY_DATABASE_URI"] = get_database_url()
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
