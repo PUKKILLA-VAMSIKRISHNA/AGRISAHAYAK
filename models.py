@@ -49,3 +49,9 @@ class EmailVerification(db.Model):
     otp = db.Column(db.String(6), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_verified = db.Column(db.Boolean, default=False)
+class PasswordReset(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    token = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_used = db.Column(db.Boolean, default=False)
