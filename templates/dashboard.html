@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+    .dashboard-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .chat-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .weather-icon {
+        font-size: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        
+        <!-- Welcome Card -->
+        <div class="card bg-success text-white mb-4">
+            <div class="card-body">
+                <h4 class="card-title">Welcome, {{ current_user.username }}!</h4>
+                <p class="card-text">How can AgriSahayak help you today?</p>
+                <a href="{{ url_for('new_chat') }}" class="btn btn-light">
+                    <i class="fas fa-plus-circle me-2"></i>Start New Chat
+                </a>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card dashboard-card h-100 bg-dark">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-seedling me-2 text-success"></i>Crop Recommendations</h5>
+                        <p class="card-text">Get crop suggestions based on your soil type and location.</p>
+                        <a href="{{ url_for('new_chat') }}" class="btn btn-outline-success">Get Recommendations</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card dashboard-card h-100 bg-dark">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-bug me-2 text-success"></i>Pest Control</h5>
+                        <p class="card-text">Identify pests and get treatment recommendations.</p>
+                        <a href="{{ url_for('new_chat') }}" class="btn btn-outline-success">Ask About Pests</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card dashboard-card h-100 bg-dark">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-tint me-2 text-success"></i>Irrigation Plan</h5>
+                        <p class="card-text">Get a customized irrigation schedule for your crops.</p>
+                        <a href="{{ url_for('new_chat') }}" class="btn btn-outline-success">Plan Irrigation</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card dashboard-card h-100 bg-dark">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-clipboard-list me-2 text-success"></i>Farm Management</h5>
+                        <p class="card-text">Get advice on sustainable farming practices.</p>
+                        <a href="{{ url_for('new_chat') }}" class="btn btn-outline-success">Improve Practices</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Chats -->
+        <div class="card bg-dark mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Chats</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group chat-list list-group-flush">
+                    {% if chats %}
+                        {% for chat in chats[:5] %}
+                        <a href="{{ url_for('chat', chat_id=chat.id) }}" class="list-group-item list-group-item-action bg-dark text-light border-light">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ chat.title }}</h6>
+                                <small>{{ chat.created_at.strftime('%d %b, %Y') }}</small>
+                            </div>
+                            {% if chat.messages %}
+                            <p class="mb-1 text-truncate">{{ chat.messages[0].content }}</p>
+                            {% else %}
+                            <p class="mb-1"><em>No messages yet</em></p>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                    <div class="list-group-item bg-dark text-light border-light">
+                        <p class="mb-0 text-center">No chat history yet. Start a new chat!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer text-center">
+                <a href="{{ url_for('new_chat') }}" class="btn btn-success">
+                    <i class="fas fa-plus-circle me-2"></i>New Chat
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Profile Summary -->
+        <div class="card bg-dark mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Profile</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 50px; height: 50px;">
+                        <span class="text-white h4 mb-0">{{ current_user.username[0].upper() }}</span>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">{{ current_user.username }}</h5>
+                        <p class="text-muted mb-0">{{ current_user.email }}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <p class="mb-1"><i class="fas fa-map-marker-alt me-2 text-success"></i>Location: {{ current_user.location or 'Not set' }}</p>
+                    <p class="mb-0"><i class="fas fa-language me-2 text-success"></i>Language: {{ current_user.preferred_language }}</p>
+                </div>
+                
+                <a href="{{ url_for('profile') }}" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-edit me-2"></i>Edit Profile
+                </a>
+            </div>
+        </div>
+        
+        <!-- Weather Widget -->
+        {% if weather_data %}
+        <div class="card bg-dark mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-cloud-sun me-2"></i>Weather</h5>
+            </div>
+            <div class="card-body text-center">
+                <h5>{{ current_user.location }}</h5>
+                <div class="my-3">
+                    {% if weather_data.icon %}
+                    <img src="https:{{ weather_data.icon }}" alt="Weather icon">
+                    {% else %}
+                    <i class="fas fa-cloud-sun weather-icon"></i>
+                    {% endif %}
+                </div>
+                <h3 class="mb-3">{{ weather_data.temperature }}°C</h3>
+                <p class="text-capitalize mb-1">{{ weather_data.description }}</p>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <p class="mb-0"><i class="fas fa-tint me-2"></i>{{ weather_data.humidity }}%</p>
+                    </div>
+                    <div class="col-6">
+                        <p class="mb-0"><i class="fas fa-wind me-2"></i>{{ weather_data.wind_speed }} m/s</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Tips & Reminders -->
+        <div class="card bg-dark">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Farming Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-leaf me-2 text-success"></i>Crop Rotation</h6>
+                    <p class="small">Rotate crops to maintain soil fertility and reduce pest problems.</p>
+                </div>
+                <div class="mb-3">
+                    <h6><i class="fas fa-tint me-2 text-success"></i>Water Management</h6>
+                    <p class="small">Water in the early morning to reduce evaporation and fungal growth.</p>
+                </div>
+                <div>
+                    <h6><i class="fas fa-bug me-2 text-success"></i>Pest Control</h6>
+                    <p class="small">Regular monitoring helps catch pest problems early when they're easier to manage.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

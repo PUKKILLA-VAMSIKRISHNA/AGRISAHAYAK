@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<style>
+    :root {
+        --leaf-green: #2E7D32;
+        --light-green: #4CAF50;
+        --earth-brown: #5D4037;
+        --wheat-gold: #FDD835;
+        --forest-green: #1B5E20;
+    }
+
+    .hero-section {
+        background-image: url('/static/images/farm_field.jpg');
+        background-size: cover;
+        background-position: center;
+        min-height: 100vh;
+        color: white;
+        display: flex;
+        align-items: center;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        position: relative;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(27, 94, 32, 0.4);
+        pointer-events: none;
+    }
+    
+    .hero-section .container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .feature-card {
+        border: none;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+        background: var(--forest-green) !important;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(46, 125, 50, 0.2);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--wheat-gold);
+    }
+
+    .btn-success {
+        background-color: var(--leaf-green) !important;
+        border-color: var(--leaf-green) !important;
+    }
+
+    .btn-success:hover {
+        background-color: var(--forest-green) !important;
+        border-color: var(--forest-green) !important;
+    }
+
+    .bg-success {
+        background-color: var(--leaf-green) !important;
+    }
+
+    .text-success {
+        color: var(--wheat-gold) !important;
+    }
+
+    .bg-dark {
+        background-color: var(--forest-green) !important;
+    }
+
+    .farmer-tech-img {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .farmer-tech-img:hover {
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section rounded-3 mb-5">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-lg-8 col-md-10 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-4">AgriSahayak: Your Farming Assistant</h1>
+                <p class="lead mb-4">Get crop recommendations, irrigation plans, and expert advice in your language.</p>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('new_chat') }}" class="btn btn-success btn-lg px-4 me-2">
+                    <i class="fas fa-comments me-2"></i>Start Chatting
+                </a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-success btn-lg px-4 me-2">
+                    <i class="fas fa-user-plus me-2"></i>Register Now
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Features</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 feature-card bg-dark text-light">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-seedling feature-icon"></i>
+                        <h4 class="card-title">Crop Recommendations</h4>
+                        <p class="card-text">Get personalized crop recommendations based on your soil type, pH value, location, and weather conditions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 feature-card bg-dark text-light">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-microphone feature-icon"></i>
+                        <h4 class="card-title">Voice Assistant</h4>
+                        <p class="card-text">Talk to our assistant in your language. Use voice commands for a hands-free experience while working in your field.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 feature-card bg-dark text-light">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-language feature-icon"></i>
+                        <h4 class="card-title">Multi-language Support</h4>
+                        <p class="card-text">Access information in multiple Indian languages including Hindi, Tamil, Telugu, and more.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 feature-card bg-dark text-light">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-tint feature-icon"></i>
+                        <h4 class="card-title">Irrigation Plans</h4>
+                        <p class="card-text">Get customized irrigation schedules based on your crops, soil type, and local weather conditions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 feature-card bg-dark text-light">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-bug feature-icon"></i>
+                        <h4 class="card-title">Pest Management</h4>
+                        <p class="card-text">Identify pests and diseases affecting your crops and get organic and chemical treatment options.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 feature-card bg-dark text-light">
+                    <div class="card-body text-center p-4">
+                        <i class="fab fa-youtube feature-icon"></i>
+                        <h4 class="card-title">Video Recommendations</h4>
+                        <p class="card-text">Get relevant YouTube videos on farming techniques, pest control, and more in your preferred language.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-dark text-light rounded-3">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row align-items-center">
+            <div class="col-md-6 order-md-2 mb-4 mb-md-0">
+                <img src="{{ url_for('static', filename='images/farmer_tech.jpg') }}" alt="Farmer using technology" class="img-fluid farmer-tech-img">
+            </div>
+            <div class="col-md-6 order-md-1">
+                <div class="d-flex mb-4">
+                    <div class="me-3">
+                        <div class="bg-success rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                            <span class="text-white">1</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Register an Account</h4>
+                        <p>Create your profile with details about your farm location, soil type, and crops.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="me-3">
+                        <div class="bg-success rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                            <span class="text-white">2</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Ask Questions</h4>
+                        <p>Chat with our AI assistant in your preferred language or use voice commands.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="me-3">
+                        <div class="bg-success rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                            <span class="text-white">3</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Get Personalized Advice</h4>
+                        <p>Receive customized recommendations for your specific farming conditions.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="me-3">
+                        <div class="bg-success rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                            <span class="text-white">4</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Implement Solutions</h4>
+                        <p>Follow the suggested practices and watch instructional videos to improve your yield.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">What Farmers Say</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center mb-3">
+                            <i class="fas fa-quote-left text-success fa-3x"></i>
+                        </div>
+                        <p class="card-text text-center">AgriSahayak helped me switch to more profitable crops suited for my soil. The voice assistant is very helpful as I can use it while working in the field.</p>
+                        <div class="text-center mt-3">
+                            <h5 class="mb-0">Rajesh Kumar</h5>
+                            <small class="text-muted">Farmer from Uttar Pradesh</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center mb-3">
+                            <i class="fas fa-quote-left text-success fa-3x"></i>
+                        </div>
+                        <p class="card-text text-center">I love that I can get farming advice in Tamil. The irrigation plans have helped me save water while improving my crop yield significantly.</p>
+                        <div class="text-center mt-3">
+                            <h5 class="mb-0">Lakshmi Raman</h5>
+                            <small class="text-muted">Farmer from Tamil Nadu</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 bg-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center mb-3">
+                            <i class="fas fa-quote-left text-success fa-3x"></i>
+                        </div>
+                        <p class="card-text text-center">The pest management advice saved my tomato crop. The YouTube videos recommended were very helpful in understanding the application of organic pesticides.</p>
+                        <div class="text-center mt-3">
+                            <h5 class="mb-0">Amardeep Singh</h5>
+                            <small class="text-muted">Farmer from Punjab</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-success text-white rounded-3">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Transform Your Farming?</h2>
+        <p class="lead mb-4">Join thousands of Indian farmers who are improving their yields with AgriSahayak</p>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('new_chat') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-comments me-2"></i>Start Chatting Now
+        </a>
+        {% else %}
+        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Register Now
+        </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
