@@ -43,3 +43,9 @@ class UserProfile(db.Model):
     farm_location = db.Column(db.String(100))
     crops_grown = db.Column(db.String(200))
     user = db.relationship('User', backref=db.backref('profile', uselist=False))
+class EmailVerification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False)
+    otp = db.Column(db.String(6), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_verified = db.Column(db.Boolean, default=False)
