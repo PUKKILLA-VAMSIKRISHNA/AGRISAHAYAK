@@ -83,8 +83,9 @@ app.config['WEATHER_API_KEY'] = os.environ.get("WEATHER_API_KEY", "")
 # Import models after db initialization
 with app.app_context():
     import models
-   from migrations import init_db
+    from migrations import init_db
     init_db()
+    
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(int(user_id))
