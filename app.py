@@ -7,6 +7,7 @@ from flask_login import LoginManager
 from dotenv import load_dotenv
 from flask_mail import Mail
 from flask_migrate import Migrate
+import re
 
 # Load environment variables
 load_dotenv()
@@ -29,7 +30,10 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'Vamsi@123')
 
 # Configure the database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get('DATABASE_URL', "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak")
+database_url = os.environ.get('DATABASE_URL', "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak")
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
