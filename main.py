@@ -18,6 +18,14 @@ mail = Mail()
 migrate = Migrate()
 
 app = Flask(__name__)
+
+# Add database configuration
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
+)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 # ... config ...
 
 db.init_app(app)
