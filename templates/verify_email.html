@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Email Verification</h4>
+                </div>
+                <div class="card-body">
+                    <p>A verification code has been sent to <strong>{{ email }}</strong>.</p>
+                    <form method="POST">
+                        <div class="form-group mb-3">
+                            <label for="otp">Enter Verification Code</label>
+                            <input type="text" class="form-control" id="otp" name="otp" required
+                                   pattern="[0-9]{6}" maxlength="6" placeholder="Enter 6-digit code">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Verify Email</button>
+                        <a href="{{ url_for('resend_otp', email=email) }}" class="btn btn-link">Resend Code</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
