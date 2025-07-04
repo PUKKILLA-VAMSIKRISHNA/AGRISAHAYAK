@@ -1,29 +1,17 @@
 import os
 import logging
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from flask_login import LoginManager
 from dotenv import load_dotenv
-from flask_mail import Mail
-from flask_migrate import Migrate
 import re
+
+# Import extensions
+from extensions import db, login_manager, mail, migrate
 
 # Load environment variables
 load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Set up database base class
-class Base(DeclarativeBase):
-    pass
-
-# Initialize extensions
-db = SQLAlchemy(model_class=Base)
-login_manager = LoginManager()
-mail = Mail()
-migrate = Migrate()
 
 # Create Flask app
 app = Flask(__name__)
