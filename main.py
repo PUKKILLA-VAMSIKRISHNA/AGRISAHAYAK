@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask
+from flask import Flask, jsonify
 from dotenv import load_dotenv
 import re
 
@@ -22,14 +22,72 @@ def get_database_url():
     # First try to get the DATABASE_URL from environment
     database_url = os.environ.get('DATABASE_URL')
     
+    print(f"Original DATABASE_URL: {database_url}")
+    
     # If DATABASE_URL is not set or is invalid, use the default local database
     if not database_url or not database_url.startswith(('postgres://', 'postgresql://')):
+        print("No valid DATABASE_URL found, using local database")
         database_url = "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
+        return database_url
     
-    # Convert postgres:// to postgresql:// if needed
+    # Convert postgres:// to postgresql:// if needed (required for newer psycopg2 versions)
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     
+    # Additional validation for Supabase URLs
+    if 'supabase.co' in database_url:
+        print("Detected Supabase URL, attempting to fix parsing issues")
+        try:
+            from urllib.parse import urlparse, quote_plus
+            
+            # Handle the case where the URL might be malformed
+            if '@' in database_url and '://' in database_url:
+                # Extract the parts manually if urlparse fails
+                protocol_part = database_url.split('://')[0] + '://'
+                rest_part = database_url.split('://')[1]
+                
+                if '@' in rest_part:
+                    auth_part = rest_part.split('@')[0]
+                    host_part = rest_part.split('@')[1]
+                    
+                    if ':' in auth_part:
+                        username = auth_part.split(':')[0]
+                        password = ':'.join(auth_part.split(':')[1:])  # Handle passwords with colons
+                        password = quote_plus(password)
+                    else:
+                        username = auth_part
+                        password = ''
+                    
+                    if ':' in host_part:
+                        hostname = host_part.split(':')[0]
+                        port_db_part = host_part.split(':')[1]
+                        if '/' in port_db_part:
+                            port = port_db_part.split('/')[0]
+                            database = port_db_part.split('/')[1]
+                        else:
+                            port = '5432'
+                            database = port_db_part
+                    else:
+                        hostname = host_part.split('/')[0]
+                        database = host_part.split('/')[1] if '/' in host_part else 'postgres'
+                        port = '5432'
+                    
+                    # Rebuild the URL
+                    database_url = f"postgresql://{username}:{password}@{hostname}:{port}/{database}"
+                    print(f"Fixed Supabase URL: {database_url}")
+                else:
+                    print("Could not parse Supabase URL, using fallback")
+                    database_url = "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
+            else:
+                print("Invalid URL format, using fallback")
+                database_url = "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
+                
+        except Exception as e:
+            print(f"Error parsing Supabase URL: {e}")
+            # Fallback to local database
+            database_url = "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
+    
+    print(f"Final DATABASE_URL: {database_url}")
     return database_url
 
 app.config["SQLALCHEMY_DATABASE_URI"] = get_database_url()
@@ -78,14 +136,33 @@ from routes import *
 # Import models and migrations after db and app are initialized
 def setup_app(app):
     with app.app_context():
-        import models
-        from migrations import init_db
-        init_db(app, db)
+        # Try to initialize database, but don't crash if it fails
+        db_initialized = False
+        try:
+            import models
+            from migrations import init_db
+            init_db(app, db)
+            print("Database initialized successfully")
+            db_initialized = True
+        except Exception as e:
+            print(f"Database initialization failed: {e}")
+            print("App will continue without database functionality")
+            db_initialized = False
         
+        # Store database status in app config
+        app.config['DB_INITIALIZED'] = db_initialized
+        
+        # Set up user loader with error handling
         from models import User
         @login_manager.user_loader
         def load_user(user_id):
-            return User.query.get(int(user_id))
+            if not db_initialized:
+                return None
+            try:
+                return User.query.get(int(user_id))
+            except Exception as e:
+                print(f"Error loading user: {e}")
+                return None
         
         # Register routes directly
         app.add_url_rule('/', 'index', index)
@@ -127,6 +204,28 @@ def setup_app(app):
         app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', protected_api_text_to_speech, methods=['POST'])
         app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', protected_api_speech_to_text, methods=['POST'])
         app.add_url_rule('/profile', 'profile', protected_profile, methods=['GET', 'POST'])
+        
+        # Add a simple health check route that doesn't require database
+        def health_check():
+            return jsonify({
+                'status': 'healthy',
+                'database': 'connected' if app.config.get('DB_INITIALIZED', False) else 'disconnected',
+                'message': 'AgriSahayak is running'
+            })
+        
+        app.add_url_rule('/health', 'health_check', health_check)
+        
+        # Add a simple index route that doesn't require database
+        def simple_index():
+            if not app.config.get('DB_INITIALIZED', False):
+                return jsonify({
+                    'message': 'AgriSahayak is starting up',
+                    'database': 'connecting...',
+                    'status': 'initializing'
+                })
+            return index()  # Use the original index function if database is available
+        
+        app.add_url_rule('/', 'index', simple_index)
 
 setup_app(app)
 

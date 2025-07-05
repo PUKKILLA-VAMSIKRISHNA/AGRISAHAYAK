@@ -4,11 +4,18 @@
     {
       "src": "main.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "50mb" }
+      "config": { 
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.9"
+      }
     }
   ],
   "routes": [
     { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/favicon.ico", "dest": "/static/images/favicon.ico" },
     { "src": "/(.*)", "dest": "/main.py" }
-  ]
+  ],
+  "env": {
+    "PYTHONPATH": "."
+  }
 } 
