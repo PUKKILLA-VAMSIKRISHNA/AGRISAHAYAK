@@ -73,7 +73,7 @@ app.config['WEATHER_API_KEY'] = os.environ.get("WEATHER_API_KEY", "")
 # Do NOT call init_db() here
 
 # Import routes at the end
-from routes import init_routes  # Force redeploy - routes.py file, not directory
+from routes import *
 
 # Import models and migrations after db and app are initialized
 def setup_app(app):
@@ -87,8 +87,46 @@ def setup_app(app):
         def load_user(user_id):
             return User.query.get(int(user_id))
         
-        # Initialize routes
-        init_routes(app)
+        # Register routes directly
+        app.add_url_rule('/', 'index', index)
+        app.add_url_rule('/login', 'login', login, methods=['GET', 'POST'])
+        app.add_url_rule('/register', 'register', register, methods=['GET', 'POST'])
+        app.add_url_rule('/verify_email/<email>', 'verify_email', verify_email, methods=['GET', 'POST'])
+        app.add_url_rule('/resend_otp/<email>', 'resend_otp', resend_otp)
+        app.add_url_rule('/forgot_password', 'forgot_password', forgot_password, methods=['GET', 'POST'])
+        app.add_url_rule('/reset_password/<token>', 'reset_password', reset_password, methods=['GET', 'POST'])
+        
+        # Apply login_required decorator to protected routes
+        from functools import wraps
+        from flask_login import login_required
+        
+        # Create protected versions of the functions
+        protected_logout = login_required(logout)
+        protected_dashboard = login_required(dashboard)
+        protected_chat = login_required(chat)
+        protected_new_chat = login_required(new_chat)
+        protected_send_message = login_required(send_message)
+        protected_delete_chat = login_required(delete_chat)
+        protected_api_get_crop_recommendations = login_required(api_get_crop_recommendations)
+        protected_api_get_youtube_videos = login_required(api_get_youtube_videos)
+        protected_api_translate = login_required(api_translate)
+        protected_api_text_to_speech = login_required(api_text_to_speech)
+        protected_api_speech_to_text = login_required(api_speech_to_text)
+        protected_profile = login_required(profile)
+        
+        # Register protected routes
+        app.add_url_rule('/logout', 'logout', protected_logout)
+        app.add_url_rule('/dashboard', 'dashboard', protected_dashboard)
+        app.add_url_rule('/chat/<int:chat_id>', 'chat', protected_chat)
+        app.add_url_rule('/chat/new', 'new_chat', protected_new_chat)
+        app.add_url_rule('/api/send_message', 'send_message', protected_send_message, methods=['POST'])
+        app.add_url_rule('/api/delete_chat/<int:chat_id>', 'delete_chat', protected_delete_chat, methods=['DELETE'])
+        app.add_url_rule('/api/get_crop_recommendations', 'api_get_crop_recommendations', protected_api_get_crop_recommendations, methods=['POST'])
+        app.add_url_rule('/api/get_youtube_videos', 'api_get_youtube_videos', protected_api_get_youtube_videos, methods=['POST'])
+        app.add_url_rule('/api/translate', 'api_translate', protected_api_translate, methods=['POST'])
+        app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', protected_api_text_to_speech, methods=['POST'])
+        app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', protected_api_speech_to_text, methods=['POST'])
+        app.add_url_rule('/profile', 'profile', protected_profile, methods=['GET', 'POST'])
 
 setup_app(app)
 
