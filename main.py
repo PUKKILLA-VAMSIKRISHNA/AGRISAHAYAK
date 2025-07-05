@@ -363,9 +363,31 @@ def setup_app(app):
         
         # Add static file routes for Vercel
         def serve_static_file(filename):
-            return app.send_static_file(filename)
+            try:
+                return app.send_static_file(filename)
+            except Exception as e:
+                print(f"Error serving static file {filename}: {e}")
+                return f"File not found: {filename}", 404
         
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
+        
+        # Add specific static file routes for better compatibility
+        def serve_js_file(filename):
+            return app.send_static_file(f'js/{filename}')
+        
+        def serve_css_file(filename):
+            return app.send_static_file(f'css/{filename}')
+        
+        def serve_image_file(filename):
+            return app.send_static_file(f'images/{filename}')
+        
+        def serve_data_file(filename):
+            return app.send_static_file(f'data/{filename}')
+        
+        app.add_url_rule('/static/js/<path:filename>', 'static_js', serve_js_file)
+        app.add_url_rule('/static/css/<path:filename>', 'static_css', serve_css_file)
+        app.add_url_rule('/static/images/<path:filename>', 'static_images', serve_image_file)
+        app.add_url_rule('/static/data/<path:filename>', 'static_data', serve_data_file)
         
         # Add a simple index route that doesn't require database
         def simple_index():
