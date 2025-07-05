@@ -1,4 +1,4 @@
-from flask import current_app, render_template
+from flask import current_app, render_template, request
 from flask_mail import Message
 import random
 import string
@@ -87,7 +87,11 @@ def send_verification_email(email, otp):
 
 def send_password_reset_email(email, token):
     """Send password reset email with token"""
-    reset_url = f"{current_app.config['BASE_URL']}/reset_password/{token}"
+    base_url = current_app.config.get('BASE_URL')
+    if not base_url or base_url == 'http://localhost:5000':
+        # Use the request host if BASE_URL is not set or is localhost
+        base_url = request.url_root.rstrip('/')
+    reset_url = f"{base_url}/reset_password/{token}"
     
     msg = Message('Reset Your Password - FarmWise',
                   sender=('FarmWise', current_app.config['MAIL_USERNAME']),
