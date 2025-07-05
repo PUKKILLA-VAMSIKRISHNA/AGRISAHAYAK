@@ -87,15 +87,31 @@ def get_database_url():
             # Fallback to local database
             database_url = "postgresql://postgres:Vamsi123@localhost:5432/agrisahayak"
     
+    # For Vercel deployment, if we can't connect to Supabase, use a fallback
+    if 'supabase.co' in database_url and os.environ.get('VERCEL'):
+        print("Running on Vercel with Supabase - will attempt connection but may fail gracefully")
+        # Keep the Supabase URL but add connection timeout
+    
     print(f"Final DATABASE_URL: {database_url}")
     return database_url
 
-app.config["SQLALCHEMY_DATABASE_URI"] = get_database_url()
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# Try to get database URL, but don't fail if it's not available
+try:
+    database_url = get_database_url()
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+        "pool_timeout": 5,
+        "max_overflow": 0,
+        "pool_size": 1,
+    }
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+except Exception as e:
+    print(f"Error configuring database: {e}")
+    # Use a dummy database URL that will fail gracefully
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Email configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -141,6 +157,15 @@ def setup_app(app):
         try:
             import models
             from migrations import init_db
+            
+            # Test database connection first
+            try:
+                db.engine.connect()
+                print("Database connection successful")
+            except Exception as conn_error:
+                print(f"Database connection test failed: {conn_error}")
+                raise conn_error
+            
             init_db(app, db)
             print("Database initialized successfully")
             db_initialized = True
@@ -164,14 +189,48 @@ def setup_app(app):
                 print(f"Error loading user: {e}")
                 return None
         
-        # Register routes directly
-        app.add_url_rule('/', 'index', index)
-        app.add_url_rule('/login', 'login', login, methods=['GET', 'POST'])
-        app.add_url_rule('/register', 'register', register, methods=['GET', 'POST'])
-        app.add_url_rule('/verify_email/<email>', 'verify_email', verify_email, methods=['GET', 'POST'])
-        app.add_url_rule('/resend_otp/<email>', 'resend_otp', resend_otp)
-        app.add_url_rule('/forgot_password', 'forgot_password', forgot_password, methods=['GET', 'POST'])
-        app.add_url_rule('/reset_password/<token>', 'reset_password', reset_password, methods=['GET', 'POST'])
+        # Register routes directly - only if database is available
+        if db_initialized:
+            app.add_url_rule('/login', 'login', login, methods=['GET', 'POST'])
+            app.add_url_rule('/register', 'register', register, methods=['GET', 'POST'])
+            app.add_url_rule('/verify_email/<email>', 'verify_email', verify_email, methods=['GET', 'POST'])
+            app.add_url_rule('/resend_otp/<email>', 'resend_otp', resend_otp)
+            app.add_url_rule('/forgot_password', 'forgot_password', forgot_password, methods=['GET', 'POST'])
+            app.add_url_rule('/reset_password/<token>', 'reset_password', reset_password, methods=['GET', 'POST'])
+        else:
+            # Add placeholder routes that return maintenance message
+            def maintenance_route():
+                return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>AgriSahayak - Maintenance</title>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .container { max-width: 600px; margin: 0 auto; }
+                        .status { color: #666; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>🌾 AgriSahayak</h1>
+                        <div class="status">
+                            <p>Database is currently unavailable.</p>
+                            <p>Please try again later.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+            
+            app.add_url_rule('/login', 'login', maintenance_route, methods=['GET', 'POST'])
+            app.add_url_rule('/register', 'register', maintenance_route, methods=['GET', 'POST'])
+            app.add_url_rule('/verify_email/<email>', 'verify_email', maintenance_route, methods=['GET', 'POST'])
+            app.add_url_rule('/resend_otp/<email>', 'resend_otp', maintenance_route)
+            app.add_url_rule('/forgot_password', 'forgot_password', maintenance_route, methods=['GET', 'POST'])
+            app.add_url_rule('/reset_password/<token>', 'reset_password', maintenance_route, methods=['GET', 'POST'])
         
         # Apply login_required decorator to protected routes
         from functools import wraps
@@ -191,19 +250,34 @@ def setup_app(app):
         protected_api_speech_to_text = login_required(api_speech_to_text)
         protected_profile = login_required(profile)
         
-        # Register protected routes
-        app.add_url_rule('/logout', 'logout', protected_logout)
-        app.add_url_rule('/dashboard', 'dashboard', protected_dashboard)
-        app.add_url_rule('/chat/<int:chat_id>', 'chat', protected_chat)
-        app.add_url_rule('/chat/new', 'new_chat', protected_new_chat)
-        app.add_url_rule('/api/send_message', 'send_message', protected_send_message, methods=['POST'])
-        app.add_url_rule('/api/delete_chat/<int:chat_id>', 'delete_chat', protected_delete_chat, methods=['DELETE'])
-        app.add_url_rule('/api/get_crop_recommendations', 'api_get_crop_recommendations', protected_api_get_crop_recommendations, methods=['POST'])
-        app.add_url_rule('/api/get_youtube_videos', 'api_get_youtube_videos', protected_api_get_youtube_videos, methods=['POST'])
-        app.add_url_rule('/api/translate', 'api_translate', protected_api_translate, methods=['POST'])
-        app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', protected_api_text_to_speech, methods=['POST'])
-        app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', protected_api_speech_to_text, methods=['POST'])
-        app.add_url_rule('/profile', 'profile', protected_profile, methods=['GET', 'POST'])
+        # Register protected routes - only if database is available
+        if db_initialized:
+            app.add_url_rule('/logout', 'logout', protected_logout)
+            app.add_url_rule('/dashboard', 'dashboard', protected_dashboard)
+            app.add_url_rule('/chat/<int:chat_id>', 'chat', protected_chat)
+            app.add_url_rule('/chat/new', 'new_chat', protected_new_chat)
+            app.add_url_rule('/api/send_message', 'send_message', protected_send_message, methods=['POST'])
+            app.add_url_rule('/api/delete_chat/<int:chat_id>', 'delete_chat', protected_delete_chat, methods=['DELETE'])
+            app.add_url_rule('/api/get_crop_recommendations', 'api_get_crop_recommendations', protected_api_get_crop_recommendations, methods=['POST'])
+            app.add_url_rule('/api/get_youtube_videos', 'api_get_youtube_videos', protected_api_get_youtube_videos, methods=['POST'])
+            app.add_url_rule('/api/translate', 'api_translate', protected_api_translate, methods=['POST'])
+            app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', protected_api_text_to_speech, methods=['POST'])
+            app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', protected_api_speech_to_text, methods=['POST'])
+            app.add_url_rule('/profile', 'profile', protected_profile, methods=['GET', 'POST'])
+        else:
+            # Add placeholder routes for protected routes
+            app.add_url_rule('/logout', 'logout', maintenance_route)
+            app.add_url_rule('/dashboard', 'dashboard', maintenance_route)
+            app.add_url_rule('/chat/<int:chat_id>', 'chat', maintenance_route)
+            app.add_url_rule('/chat/new', 'new_chat', maintenance_route)
+            app.add_url_rule('/api/send_message', 'send_message', maintenance_route, methods=['POST'])
+            app.add_url_rule('/api/delete_chat/<int:chat_id>', 'delete_chat', maintenance_route, methods=['DELETE'])
+            app.add_url_rule('/api/get_crop_recommendations', 'api_get_crop_recommendations', maintenance_route, methods=['POST'])
+            app.add_url_rule('/api/get_youtube_videos', 'api_get_youtube_videos', maintenance_route, methods=['POST'])
+            app.add_url_rule('/api/translate', 'api_translate', maintenance_route, methods=['POST'])
+            app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', maintenance_route, methods=['POST'])
+            app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', maintenance_route, methods=['POST'])
+            app.add_url_rule('/profile', 'profile', maintenance_route, methods=['GET', 'POST'])
         
         # Add a simple health check route that doesn't require database
         def health_check():
@@ -215,17 +289,82 @@ def setup_app(app):
         
         app.add_url_rule('/health', 'health_check', health_check)
         
+        # Add favicon route
+        def favicon():
+            try:
+                return app.send_static_file('images/favicon.ico')
+            except:
+                # Return a simple 404 for favicon if file doesn't exist
+                return '', 404
+        
+        app.add_url_rule('/favicon.ico', 'favicon', favicon)
+        
         # Add a simple index route that doesn't require database
         def simple_index():
             if not app.config.get('DB_INITIALIZED', False):
-                return jsonify({
-                    'message': 'AgriSahayak is starting up',
-                    'database': 'connecting...',
-                    'status': 'initializing'
-                })
+                # Return a simple HTML response instead of JSON
+                return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>AgriSahayak - Starting Up</title>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .container { max-width: 600px; margin: 0 auto; }
+                        .status { color: #666; margin: 20px 0; }
+                        .retry { margin-top: 30px; }
+                        .retry a { color: #007bff; text-decoration: none; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>🌾 AgriSahayak</h1>
+                        <div class="status">
+                            <p>Application is starting up...</p>
+                            <p>Database: Connecting...</p>
+                            <p>Status: Initializing</p>
+                        </div>
+                        <div class="retry">
+                            <a href="/">Refresh Page</a>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
             return index()  # Use the original index function if database is available
         
         app.add_url_rule('/', 'index', simple_index)
+        
+        # Add a catch-all route for any other requests
+        def catch_all(path):
+            return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>AgriSahayak - Page Not Found</title>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                    .container { max-width: 600px; margin: 0 auto; }
+                    .status { color: #666; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🌾 AgriSahayak</h1>
+                    <div class="status">
+                        <p>Page not found: /{}</p>
+                        <p><a href="/">Go to Home</a></p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.format(path), 404
+        
+        app.add_url_rule('/<path:path>', 'catch_all', catch_all)
 
 setup_app(app)
 
