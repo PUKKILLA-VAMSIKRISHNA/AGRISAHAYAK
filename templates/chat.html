@@ -334,7 +334,7 @@
             
             <!-- Input Area -->
             <div class="chat-input-container">
-                <form id="message-form" class="d-flex align-items-center">
+                <form id="message-form" class="d-flex align-items-center" onsubmit="return false;">
                     <input type="hidden" id="chat-id" value="{{ chat.id }}">
                     <button type="button" id="voice-btn" class="btn btn-outline-success voice-btn me-2">
                         <i class="fas fa-microphone"></i>

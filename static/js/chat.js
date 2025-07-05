@@ -1,5 +1,7 @@
 // Chat functionality
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Chat.js loaded');
+    
     const messageForm = document.getElementById('message-form');
     const messageInput = document.getElementById('message-input');
     const chatContainer = document.getElementById('chat-container');
@@ -15,6 +17,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let autoPlayAudio = false;
     let currentLanguage = languageSelect.value;
     
+    console.log('Chat elements found:', {
+        messageForm: !!messageForm,
+        messageInput: !!messageInput,
+        chatContainer: !!chatContainer,
+        chatId: chatId,
+        languageSelect: !!languageSelect
+    });
+    
     // Initialize chat - scroll to bottom
     scrollToBottom();
     
@@ -29,9 +39,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function sendMessage(e) {
         e.preventDefault();
+        console.log('sendMessage called');
         
         const message = messageInput.value.trim();
-        if (!message) return;
+        if (!message) {
+            console.log('Empty message, returning');
+            return;
+        }
+        
+        console.log('Sending message:', message);
         
         // Clear input
         messageInput.value = '';
@@ -44,22 +60,38 @@ document.addEventListener('DOMContentLoaded', function() {
         typingIndicator.style.display = 'block';
         scrollToBottom();
         
+        const requestData = {
+            chat_id: chatId,
+            message: message,
+            language: currentLanguage
+        };
+        
+        console.log('Request data:', requestData);
+        
         // Send message to server
         fetch('/api/send_message', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({
-                chat_id: chatId,
-                message: message,
-                language: currentLanguage
-            })
+            body: JSON.stringify(requestData)
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Response data:', data);
             // Hide typing indicator
             typingIndicator.style.display = 'none';
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
             
             // Add bot response to UI
             addMessageToUI(data.response, false, data.message_id);
@@ -72,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             typingIndicator.style.display = 'none';
-            showNotification('There was an error sending your message. Please try again.', 'danger');
+            showNotification('There was an error sending your message. Please try again. Error: ' + error.message, 'danger');
         });
     }
     

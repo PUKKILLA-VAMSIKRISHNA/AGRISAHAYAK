@@ -1,8 +1,16 @@
 // Voice functionality
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Voice.js loaded');
+    
     const voiceButton = document.getElementById('voice-btn');
     const messageInput = document.getElementById('message-input');
     const languageSelect = document.getElementById('language-select');
+    
+    console.log('Voice elements found:', {
+        voiceButton: !!voiceButton,
+        messageInput: !!messageInput,
+        languageSelect: !!languageSelect
+    });
     
     // Check if browser supports speech recognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -23,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 voiceButton.classList.remove('btn-danger', 'recording');
                 voiceButton.classList.add('btn-outline-success');
                 voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+                isRecording = false;
             } else {
                 // Start recording
                 try {
@@ -37,13 +46,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     voiceButton.innerHTML = '<i class="fas fa-stop"></i>';
                     
                     messageInput.placeholder = "Listening...";
+                    isRecording = true;
                 } catch (error) {
                     console.error('Speech recognition error:', error);
                     showNotification('Could not start voice recognition. Please check your microphone permissions.', 'danger');
+                    isRecording = false;
                 }
             }
-            
-            isRecording = !isRecording;
         });
         
         // Recognition events
@@ -76,10 +85,20 @@ document.addEventListener('DOMContentLoaded', function() {
             messageInput.placeholder = "Type your message here...";
         };
     } else {
-        // Browser doesn't support speech recognition
-        voiceButton.disabled = true;
-        voiceButton.title = "Voice recognition not supported in this browser";
-        showNotification('Voice recognition is not supported in your browser. Please use Chrome for this feature.', 'warning');
+        // Browser doesn't support speech recognition - use server-side fallback
+        console.log('Web Speech API not supported, using server-side speech recognition');
+        
+        let isRecording = false;
+        
+        voiceButton.addEventListener('click', function() {
+            if (isRecording) {
+                stopServerSideSpeechRecognition();
+                isRecording = false;
+            } else {
+                startServerSideSpeechRecognition();
+                isRecording = true;
+            }
+        });
     }
     
     // Map language codes to speech recognition language codes
