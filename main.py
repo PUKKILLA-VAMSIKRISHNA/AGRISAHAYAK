@@ -1,5 +1,8 @@
 import os
 import logging
+print('ENV VARS:', {k: os.environ.get(k) for k in [
+    'DATABASE_URL', 'SECRET_KEY', 'BASE_URL', 'GEMINI_API_KEY'
+]})
 from flask import Flask, jsonify
 from dotenv import load_dotenv
 import re
