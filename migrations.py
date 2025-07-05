@@ -1,7 +1,4 @@
-from app import app, db
-# from models import User, Chat, Message, UserProfile, EmailVerification  # Remove this top-level import
-
-def init_db():
+def init_db(app, db):
     from models import User, Chat, Message, UserProfile, EmailVerification  # Import inside the function
     with app.app_context():
         # Create all tables

@@ -3,7 +3,7 @@ from flask_mail import Message
 import random
 import string
 from datetime import datetime, timedelta
-from app import db
+from extensions import db
 import logging
 import smtplib
 import ssl

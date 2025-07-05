@@ -5,14 +5,14 @@ import json
 from io import BytesIO
 from gtts import gTTS
 import speech_recognition as sr
-from app import app
+from flask import current_app
 
 def get_weather_data(location):
     """
     Get weather data using WeatherAPI.com
     """
     try:
-        api_key = app.config['WEATHER_API_KEY']
+        api_key = current_app.config['WEATHER_API_KEY']
         base_url = "http://api.weatherapi.com/v1/current.json"
         
         params = {
@@ -34,11 +34,11 @@ def get_weather_data(location):
                 'location': f"{data['location']['name']}, {data['location']['region']}"
             }
         else:
-            app.logger.error(f"Weather API error: {data.get('error', {}).get('message')}")
+            current_app.logger.error(f"Weather API error: {data.get('error', {}).get('message')}")
             return None
             
     except Exception as e:
-        app.logger.error(f"Error fetching weather data: {str(e)}")
+        current_app.logger.error(f"Error fetching weather data: {str(e)}")
         return None
 
 def translate_text(text, target_language):
@@ -49,7 +49,7 @@ def translate_text(text, target_language):
         # Use Gemini model for translation
         import google.generativeai as genai
         
-        GEMINI_API_KEY = app.config['GEMINI_API_KEY']
+        GEMINI_API_KEY = current_app.config['GEMINI_API_KEY']
         genai.configure(api_key=GEMINI_API_KEY)
         
         # Load language data to get the full language name
@@ -67,7 +67,7 @@ def translate_text(text, target_language):
         return translated_text
     
     except Exception as e:
-        app.logger.error(f"Translation error: {str(e)}")
+        current_app.logger.error(f"Translation error: {str(e)}")
         return text  # Return original text if translation fails
 
 def text_to_speech(text, language='en'):
@@ -105,7 +105,7 @@ def text_to_speech(text, language='en'):
         return audio_base64
     
     except Exception as e:
-        app.logger.error(f"Text-to-speech error: {str(e)}")
+        current_app.logger.error(f"Text-to-speech error: {str(e)}")
         return None
 
 def speech_to_text(audio_data, language='en'):
@@ -144,5 +144,5 @@ def speech_to_text(audio_data, language='en'):
         return text
     
     except Exception as e:
-        app.logger.error(f"Speech-to-text error: {str(e)}")
+        current_app.logger.error(f"Speech-to-text error: {str(e)}")
         return ""

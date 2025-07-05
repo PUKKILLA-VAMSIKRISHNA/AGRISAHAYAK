@@ -2,13 +2,7 @@ import os
 import json
 import requests
 import google.generativeai as genai
-from app import app
-
-# Initialize Gemini API
-GEMINI_API_KEY = app.config['GEMINI_API_KEY']
-YOUTUBE_API_KEY = app.config['YOUTUBE_API_KEY']
-
-genai.configure(api_key=GEMINI_API_KEY)
+from flask import current_app
 
 # Load crop data
 def load_crop_data():
@@ -20,6 +14,10 @@ def get_chatbot_response(message, user_profile, language='en'):
     Get a response from the Gemini 2.0 Flash model
     """
     try:
+        # Initialize Gemini API
+        GEMINI_API_KEY = current_app.config['GEMINI_API_KEY']
+        genai.configure(api_key=GEMINI_API_KEY)
+        
         # Create context from user profile
         context = "You are an agricultural assistant chatbot helping Indian farmers."
         
@@ -58,7 +56,7 @@ def get_chatbot_response(message, user_profile, language='en'):
         return formatted_response
     
     except Exception as e:
-        app.logger.error(f"Error generating chatbot response: {str(e)}")
+        current_app.logger.error(f"Error generating chatbot response: {str(e)}")
         return "I'm sorry, I'm having trouble processing your request right now. Please try again later."
 
 def get_crop_recommendations(soil_type, soil_ph, location, language='en'):
@@ -66,6 +64,10 @@ def get_crop_recommendations(soil_type, soil_ph, location, language='en'):
     Get crop recommendations based on soil type, pH and location
     """
     try:
+        # Initialize Gemini API
+        GEMINI_API_KEY = current_app.config['GEMINI_API_KEY']
+        genai.configure(api_key=GEMINI_API_KEY)
+        
         crops_data = load_crop_data()
         
         # Filter crops based on soil type and pH
@@ -106,7 +108,7 @@ def get_crop_recommendations(soil_type, soil_ph, location, language='en'):
         return recommendations
     
     except Exception as e:
-        app.logger.error(f"Error generating crop recommendations: {str(e)}")
+        current_app.logger.error(f"Error generating crop recommendations: {str(e)}")
         return "I'm sorry, I couldn't generate crop recommendations at this time. Please try again later."
 
 def get_youtube_videos(query, language='en'):
@@ -114,6 +116,9 @@ def get_youtube_videos(query, language='en'):
     Get relevant YouTube videos based on a query
     """
     try:
+        # Get YouTube API key
+        YOUTUBE_API_KEY = current_app.config['YOUTUBE_API_KEY']
+        
         # Enhance the query for better results
         enhanced_query = f"agriculture farming {query} india tutorial"
         
@@ -158,5 +163,5 @@ def get_youtube_videos(query, language='en'):
         return videos
     
     except Exception as e:
-        app.logger.error(f"Error fetching YouTube videos: {str(e)}")
+        current_app.logger.error(f"Error fetching YouTube videos: {str(e)}")
         return []

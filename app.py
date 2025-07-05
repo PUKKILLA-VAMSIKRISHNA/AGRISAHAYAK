@@ -72,14 +72,14 @@ app.config['WEATHER_API_KEY'] = os.environ.get("WEATHER_API_KEY", "")
 with app.app_context():
     import models
     from migrations import init_db
-    init_db()
+    init_db(app, db)
     
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(int(user_id))
 
 # Import routes after app initialization to avoid circular imports
-from routes import *
+from routes import init_routes
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
