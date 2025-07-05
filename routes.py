@@ -246,7 +246,7 @@ def chat(chat_id):
     with open('static/data/languages.json', 'r', encoding='utf-8') as f:
         languages = json.load(f)
     
-    return render_template('chat_inline.html', chat=chat, messages=messages, languages=languages)
+    return render_template('chat.html', chat=chat, messages=messages, languages=languages)
 
 def new_chat():
     chat = Chat(user_id=current_user.id, title="New Chat")
