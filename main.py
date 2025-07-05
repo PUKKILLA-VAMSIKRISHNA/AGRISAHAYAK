@@ -53,7 +53,8 @@ def get_database_url():
                     if ':' in auth_part:
                         username = auth_part.split(':')[0]
                         password = ':'.join(auth_part.split(':')[1:])  # Handle passwords with colons
-                        password = quote_plus(password)
+                        # Don't quote_plus the password as it might cause issues
+                        password = password
                     else:
                         username = auth_part
                         password = ''
@@ -90,7 +91,11 @@ def get_database_url():
     # For Vercel deployment, if we can't connect to Supabase, use a fallback
     if 'supabase.co' in database_url and os.environ.get('VERCEL'):
         print("Running on Vercel with Supabase - will attempt connection but may fail gracefully")
-        # Keep the Supabase URL but add connection timeout
+        # Add additional parameters for Vercel + Supabase compatibility
+        if '?' not in database_url:
+            database_url += "?sslmode=require"
+        else:
+            database_url += "&sslmode=require"
     
     print(f"Final DATABASE_URL: {database_url}")
     return database_url
@@ -105,6 +110,11 @@ try:
         "pool_timeout": 5,
         "max_overflow": 0,
         "pool_size": 1,
+        "connect_args": {
+            "sslmode": "require",  # Force SSL for Supabase
+            "connect_timeout": 10,
+            "application_name": "agrisahayak_app"
+        }
     }
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 except Exception as e:
@@ -158,13 +168,27 @@ def setup_app(app):
             import models
             from migrations import init_db
             
-            # Test database connection first
-            try:
-                db.engine.connect()
-                print("Database connection successful")
-            except Exception as conn_error:
-                print(f"Database connection test failed: {conn_error}")
-                raise conn_error
+            # Test database connection first with retry
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    print(f"Attempting database connection (attempt {attempt + 1}/{max_retries})...")
+                    connection = db.engine.connect()
+                    connection.close()
+                    print("Database connection successful")
+                    break
+                except Exception as conn_error:
+                    print(f"Database connection test failed (attempt {attempt + 1}): {conn_error}")
+                    print(f"Connection error type: {type(conn_error).__name__}")
+                    if hasattr(conn_error, 'orig'):
+                        print(f"Original error: {conn_error.orig}")
+                    
+                    if attempt == max_retries - 1:
+                        raise conn_error
+                    else:
+                        print("Retrying in 2 seconds...")
+                        import time
+                        time.sleep(2)
             
             init_db(app, db)
             print("Database initialized successfully")
