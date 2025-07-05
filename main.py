@@ -291,13 +291,19 @@ def setup_app(app):
         
         # Add favicon route
         def favicon():
-            try:
-                return app.send_static_file('images/favicon.ico')
-            except:
-                # Return a simple 404 for favicon if file doesn't exist
-                return '', 404
+            # Return a simple 1x1 transparent PNG as favicon
+            from flask import Response
+            import base64
+            
+            # Simple 1x1 transparent PNG
+            png_data = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+            
+            response = Response(png_data, mimetype='image/png')
+            response.headers['Cache-Control'] = 'public, max-age=31536000'
+            return response
         
         app.add_url_rule('/favicon.ico', 'favicon', favicon)
+        app.add_url_rule('/favicon.png', 'favicon_png', favicon)  # Handle .png requests too
         
         # Add a simple index route that doesn't require database
         def simple_index():
