@@ -104,6 +104,7 @@ def get_database_url():
 try:
     print(f"Environment check - VERCEL: {os.environ.get('VERCEL')}")
     print(f"Environment check - DATABASE_URL exists: {bool(os.environ.get('DATABASE_URL'))}")
+    print(f"Environment check - SECRET_KEY exists: {bool(os.environ.get('SECRET_KEY'))}")
     
     database_url = get_database_url()
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
