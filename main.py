@@ -102,6 +102,9 @@ def get_database_url():
 
 # Try to get database URL, but don't fail if it's not available
 try:
+    print(f"Environment check - VERCEL: {os.environ.get('VERCEL')}")
+    print(f"Environment check - DATABASE_URL exists: {bool(os.environ.get('DATABASE_URL'))}")
+    
     database_url = get_database_url()
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
@@ -308,10 +311,38 @@ def setup_app(app):
             return jsonify({
                 'status': 'healthy',
                 'database': 'connected' if app.config.get('DB_INITIALIZED', False) else 'disconnected',
+                'database_url_set': bool(os.environ.get('DATABASE_URL')),
                 'message': 'AgriSahayak is running'
             })
         
         app.add_url_rule('/health', 'health_check', health_check)
+        
+        # Add a database status check route
+        def db_status():
+            db_url = os.environ.get('DATABASE_URL', 'Not set')
+            db_initialized = app.config.get('DB_INITIALIZED', False)
+            
+            status_info = {
+                'database_url_set': bool(db_url and db_url != 'Not set'),
+                'database_initialized': db_initialized,
+                'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
+                'message': 'Database status check'
+            }
+            
+            if db_initialized:
+                status_info['status'] = 'connected'
+                status_info['message'] = 'Database is connected and working'
+            else:
+                status_info['status'] = 'disconnected'
+                status_info['message'] = 'Database is not connected'
+                if not db_url or db_url == 'Not set':
+                    status_info['error'] = 'DATABASE_URL environment variable not set'
+                else:
+                    status_info['error'] = 'Database connection failed'
+            
+            return jsonify(status_info)
+        
+        app.add_url_rule('/db-status', 'db_status', db_status)
         
         # Add favicon route
         def favicon():
