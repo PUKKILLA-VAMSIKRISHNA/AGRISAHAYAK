@@ -73,7 +73,7 @@ app.config['WEATHER_API_KEY'] = os.environ.get("WEATHER_API_KEY", "")
 # Do NOT call init_db() here
 
 # Import routes at the end
-from routes import init_routes
+from routes import init_routes  # Force redeploy - routes.py file, not directory
 
 # Import models and migrations after db and app are initialized
 def setup_app(app):
