@@ -14,7 +14,7 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'Vamsi@123')
 
 # Configure the database
@@ -360,6 +360,12 @@ def setup_app(app):
         
         app.add_url_rule('/favicon.ico', 'favicon', favicon)
         app.add_url_rule('/favicon.png', 'favicon_png', favicon)  # Handle .png requests too
+        
+        # Add static file routes for Vercel
+        def serve_static_file(filename):
+            return app.send_static_file(filename)
+        
+        app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
         
         # Add a simple index route that doesn't require database
         def simple_index():
