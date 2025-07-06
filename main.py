@@ -18,6 +18,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Create Flask app
 app = Flask(__name__, static_folder='static', static_url_path='/static')
+
+# Configure static file serving for Vercel
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
 app.secret_key = os.environ.get('SECRET_KEY', 'Vamsi@123')
 
 # Configure the database
@@ -295,7 +298,8 @@ def setup_app(app):
             app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', protected_api_text_to_speech, methods=['POST'])
             app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', protected_api_speech_to_text, methods=['POST'])
             app.add_url_rule('/profile', 'profile', protected_profile, methods=['GET', 'POST'])
-        app.add_url_rule('/debug', 'debug', debug)
+            app.add_url_rule('/debug', 'debug', debug)
+            app.add_url_rule('/debug-static', 'debug_static', debug_static_files)
         else:
             # Add placeholder routes for protected routes
             app.add_url_rule('/logout', 'logout', maintenance_route)
@@ -311,6 +315,7 @@ def setup_app(app):
             app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', maintenance_route, methods=['POST'])
             app.add_url_rule('/profile', 'profile', maintenance_route, methods=['GET', 'POST'])
             app.add_url_rule('/debug', 'debug', debug)
+            app.add_url_rule('/debug-static', 'debug_static', debug_static_files)
         
         # Add a simple health check route that doesn't require database
         def health_check():
@@ -389,6 +394,33 @@ def setup_app(app):
         
         app.add_url_rule('/test-static', 'test_static', test_static_files)
         
+        # Add a debug route to check static file serving
+        def debug_static_files():
+            import os
+            static_folder = app.static_folder
+            static_url_path = app.static_url_path
+            
+            # List all files in static folder
+            static_files = []
+            if os.path.exists(static_folder):
+                for root, dirs, files in os.walk(static_folder):
+                    for file in files:
+                        rel_path = os.path.relpath(os.path.join(root, file), static_folder)
+                        static_files.append(rel_path)
+            
+            return jsonify({
+                'static_folder': static_folder,
+                'static_url_path': static_url_path,
+                'static_files': static_files,
+                'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
+                'app_config': {
+                    'static_folder': app.static_folder,
+                    'static_url_path': app.static_url_path
+                }
+            })
+        
+        app.add_url_rule('/debug-static', 'debug_static', debug_static_files)
+        
         # Add favicon route
         def favicon():
             # Return a simple 1x1 transparent PNG as favicon
@@ -415,7 +447,42 @@ def setup_app(app):
         # Add static file routes for Vercel
         def serve_static_file(filename):
             try:
-                return app.send_static_file(filename)
+                print(f"Serving static file: {filename}")
+                
+                # Set proper MIME types
+                mime_types = {
+                    '.css': 'text/css',
+                    '.js': 'application/javascript',
+                    '.png': 'image/png',
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.gif': 'image/gif',
+                    '.ico': 'image/x-icon',
+                    '.svg': 'image/svg+xml',
+                    '.woff': 'font/woff',
+                    '.woff2': 'font/woff2',
+                    '.ttf': 'font/ttf',
+                    '.eot': 'application/vnd.ms-fontobject'
+                }
+                
+                response = app.send_static_file(filename)
+                
+                # Set proper MIME type based on file extension
+                import os
+                file_ext = os.path.splitext(filename)[1].lower()
+                if file_ext in mime_types:
+                    response.mimetype = mime_types[file_ext]
+                
+                # Add CORS headers for Vercel
+                response.headers['Access-Control-Allow-Origin'] = '*'
+                response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+                
+                # Add cache headers
+                if file_ext in ['.css', '.js']:
+                    response.headers['Cache-Control'] = 'public, max-age=31536000'
+                
+                return response
             except Exception as e:
                 print(f"Error serving static file {filename}: {e}")
                 return f"Static file {filename} not found", 404
