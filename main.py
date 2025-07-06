@@ -17,7 +17,7 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
 # Create Flask app
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+app = Flask(__name__, static_folder='public', static_url_path='/static')
 
 # Configure static file serving for Vercel
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
@@ -284,6 +284,31 @@ def setup_app(app):
         protected_api_speech_to_text = login_required(api_speech_to_text)
         protected_profile = login_required(profile)
         
+        # Define debug_static_files function first
+        def debug_static_files():
+            import os
+            static_folder = app.static_folder
+            static_url_path = app.static_url_path
+            
+            # List all files in public folder
+            static_files = []
+            if os.path.exists(static_folder):
+                for root, dirs, files in os.walk(static_folder):
+                    for file in files:
+                        rel_path = os.path.relpath(os.path.join(root, file), static_folder)
+                        static_files.append(rel_path)
+            
+            return jsonify({
+                'static_folder': static_folder,
+                'static_url_path': static_url_path,
+                'static_files': static_files,
+                'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
+                'app_config': {
+                    'static_folder': app.static_folder,
+                    'static_url_path': app.static_url_path
+                }
+            })
+        
         # Register protected routes - only if database is available
         if db_initialized:
             app.add_url_rule('/logout', 'logout', protected_logout)
@@ -368,7 +393,7 @@ def setup_app(app):
             results = {}
             for file_path in static_files:
                 try:
-                    full_path = os.path.join('static', file_path)
+                    full_path = os.path.join('public', file_path)
                     if os.path.exists(full_path):
                         results[file_path] = {
                             'exists': True,
@@ -394,33 +419,6 @@ def setup_app(app):
         
         app.add_url_rule('/test-static', 'test_static', test_static_files)
         
-        # Add a debug route to check static file serving
-        def debug_static_files():
-            import os
-            static_folder = app.static_folder
-            static_url_path = app.static_url_path
-            
-            # List all files in static folder
-            static_files = []
-            if os.path.exists(static_folder):
-                for root, dirs, files in os.walk(static_folder):
-                    for file in files:
-                        rel_path = os.path.relpath(os.path.join(root, file), static_folder)
-                        static_files.append(rel_path)
-            
-            return jsonify({
-                'static_folder': static_folder,
-                'static_url_path': static_url_path,
-                'static_files': static_files,
-                'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
-                'app_config': {
-                    'static_folder': app.static_folder,
-                    'static_url_path': app.static_url_path
-                }
-            })
-        
-        app.add_url_rule('/debug-static', 'debug_static', debug_static_files)
-        
         # Add favicon route
         def favicon():
             # Return a simple 1x1 transparent PNG as favicon
@@ -437,7 +435,7 @@ def setup_app(app):
         app.add_url_rule('/favicon.ico', 'favicon', favicon)
         app.add_url_rule('/favicon.png', 'favicon_png', favicon)  # Handle .png requests too
         
-        # Add favicon serving from static folder
+        # Add favicon serving from public folder
         def serve_favicon():
             try:
                 return app.send_static_file('images/favicon.ico')
@@ -447,7 +445,7 @@ def setup_app(app):
         # Add static file routes for Vercel
         def serve_static_file(filename):
             try:
-                print(f"Serving static file: {filename}")
+                print(f"Serving public file: {filename}")
                 
                 # Set proper MIME types
                 mime_types = {
@@ -484,8 +482,8 @@ def setup_app(app):
                 
                 return response
             except Exception as e:
-                print(f"Error serving static file {filename}: {e}")
-                return f"Static file {filename} not found", 404
+                print(f"Error serving public file {filename}: {e}")
+                return f"Public file {filename} not found", 404
         
         # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)

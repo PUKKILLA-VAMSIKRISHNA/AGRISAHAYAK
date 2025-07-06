@@ -6,7 +6,7 @@ from flask import current_app
 
 # Load crop data
 def load_crop_data():
-    with open('static/data/crops.json', 'r', encoding='utf-8') as f:
+    with open('public/data/crops.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def get_chatbot_response(message, user_profile, language='en'):

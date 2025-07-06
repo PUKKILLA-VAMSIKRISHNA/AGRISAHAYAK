@@ -14,7 +14,7 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 
 # Create Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='public', static_url_path='/static')
 app.secret_key = os.environ.get('SECRET_KEY', 'Vamsi@123')
 
 # Configure the database

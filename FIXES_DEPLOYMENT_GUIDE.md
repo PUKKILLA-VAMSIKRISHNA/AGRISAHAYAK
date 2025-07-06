@@ -28,16 +28,16 @@
 - Updated Bootstrap JS to version 5.3.0
 - Added custom dark theme CSS
 
-### 3. `static/js/chat.js`
+### 3. `public/js/chat.js`
 - Added null checks for DOM elements
 - Added API connectivity testing
 - Improved error handling and debugging
 
-### 4. `static/js/voice.js`
+### 4. `public/js/voice.js`
 - Added null checks for voice button
 - Improved error handling for speech recognition
 
-### 5. `static/js/main.js`
+### 5. `public/js/main.js`
 - Added fallback for `showNotification` function
 - Improved Bootstrap Alert handling
 

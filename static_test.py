@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory
 import os
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+app = Flask(__name__, static_folder='public', static_url_path='/static')
 
 @app.route('/')
 def index():
@@ -35,7 +35,7 @@ def index():
 def test_static(filename):
     """Test endpoint to check if static files are accessible"""
     try:
-        return send_from_directory('static', filename)
+        return send_from_directory('public', filename)
     except Exception as e:
         return f"Error serving {filename}: {str(e)}", 404
 
