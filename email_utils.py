@@ -28,8 +28,8 @@ def send_verification_email(email, otp):
     
     for attempt in range(max_retries):
         try:
-            msg = Message('Verify Your Email - FarmWise',
-                        sender=('FarmWise', current_app.config['MAIL_USERNAME']),
+            msg = Message('Verify Your Email - AgriSahayak',
+                        sender=('AgriSahayak', 'agrisahayak2025@gmail.com'),
                         recipients=[email])
             
             # Add email headers to improve deliverability
@@ -47,7 +47,7 @@ def send_verification_email(email, otp):
             
             # Add plain text version as fallback
             msg.body = f"""
-            Your FarmWise verification code is: {otp}
+            Your AgriSahayak verification code is: {otp}
             
             This code will expire in 10 minutes.
             
@@ -93,8 +93,8 @@ def send_password_reset_email(email, token):
         base_url = request.url_root.rstrip('/')
     reset_url = f"{base_url}/reset_password/{token}"
     
-    msg = Message('Reset Your Password - FarmWise',
-                  sender=('FarmWise', current_app.config['MAIL_USERNAME']),
+    msg = Message('Reset Your Password - AgriSahayak',
+                  sender=('AgriSahayak', 'agrisahayak2025@gmail.com'),
                   recipients=[email])
     
     # Add email headers to improve deliverability
@@ -112,7 +112,7 @@ def send_password_reset_email(email, token):
     
     # Add plain text version as fallback
     msg.body = f"""
-    To reset your FarmWise password, click the following link:
+    To reset your AgriSahayak password, click the following link:
     {reset_url}
     
     This link will expire in 1 hour.

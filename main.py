@@ -3,7 +3,7 @@ import logging
 print('ENV VARS:', {k: os.environ.get(k) for k in [
     'DATABASE_URL', 'SECRET_KEY', 'BASE_URL', 'GEMINI_API_KEY'
 ]})
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from dotenv import load_dotenv
 import re
 
@@ -554,6 +554,11 @@ def setup_app(app):
             """.format(path), 404
         
         app.add_url_rule('/<path:path>', 'catch_all', catch_all)
+
+        def developers():
+            return render_template('developers.html')
+
+        app.add_url_rule('/developers', 'developers', developers)
 
 setup_app(app)
 
