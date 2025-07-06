@@ -361,6 +361,9 @@ def api_speech_to_text():
     
     return jsonify({'text': text})
 
+def debug():
+    return render_template('debug.html')
+
 def profile():
     profile = UserProfile.query.filter_by(user_id=current_user.id).first()
     

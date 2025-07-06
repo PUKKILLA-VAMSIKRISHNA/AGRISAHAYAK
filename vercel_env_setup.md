@@ -70,15 +70,43 @@ After redeployment, test these URLs:
 - `https://agrisahayak.vercel.app/static/js/chat.js` - Should load JavaScript file
 - `https://agrisahayak.vercel.app/static/css/style.css` - Should load CSS file
 
+### Step 6: Debug Chat Issues
+If chat is not working:
+
+1. **Check Browser Console:**
+   - Open browser developer tools (F12)
+   - Go to Console tab
+   - Look for any JavaScript errors
+   - Check if static files are loading (should see no 404 errors)
+
+2. **Test Static Files:**
+   - Visit: `https://agrisahayak.vercel.app/static/js/main.js`
+   - Visit: `https://agrisahayak.vercel.app/static/js/chat.js`
+   - Visit: `https://agrisahayak.vercel.app/static/js/voice.js`
+   - All should return JavaScript code, not 404 errors
+
+3. **Check Environment Variables:**
+   - Visit: `https://agrisahayak.vercel.app/db-status`
+   - Should show database connection status
+   - Check if GEMINI_API_KEY is set
+
+4. **Test API Endpoints:**
+   - Try sending a message in chat
+   - Check Network tab in browser dev tools
+   - Look for `/api/send_message` requests
+   - Check if they return proper responses
+
 ### Troubleshooting
 If static files still don't load:
 1. Check Vercel function logs
 2. Ensure all environment variables are set
 3. Try accessing static files directly via URL
 4. Check browser console for errors
+5. Verify that the `main.js` file is being loaded (contains `showNotification` function)
 
 ## **IMPORTANT NOTES:**
 - Make sure to set **Environment** to "Production, Preview, Development" for all variables
 - The GEMINI_API_KEY is crucial for chat functionality
 - The DATABASE_URL is crucial for user authentication and chat history
-- After setting variables, you MUST redeploy for changes to take effect 
+- After setting variables, you MUST redeploy for changes to take effect
+- If chat still doesn't work, check browser console for JavaScript errors 

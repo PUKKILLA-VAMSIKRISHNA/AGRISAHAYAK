@@ -102,7 +102,18 @@ function showNotification(message, type = 'success') {
     
     // Auto dismiss after 5 seconds
     setTimeout(() => {
-        const bsAlert = new bootstrap.Alert(alertContainer);
-        bsAlert.close();
+        try {
+            // Try to use Bootstrap Alert if available
+            if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                const bsAlert = new bootstrap.Alert(alertContainer);
+                bsAlert.close();
+            } else {
+                // Fallback: just remove the element
+                alertContainer.remove();
+            }
+        } catch (error) {
+            // Fallback: just remove the element
+            alertContainer.remove();
+        }
     }, 5000);
 }

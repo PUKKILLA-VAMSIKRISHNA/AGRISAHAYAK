@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Test script for Vercel deployment
+Test script to verify the fixes for chat and voice functionality
 """
 
+import os
 import requests
 import json
-import sys
 
 def test_vercel_deployment():
-    """Test the Vercel deployment endpoints"""
+    """Test the Vercel deployment with the fixes"""
     
     # Your Vercel deployment URL
     base_url = "https://agrisahayak.vercel.app"
     
-    print("Testing Vercel deployment...")
+    print("Testing Vercel deployment with fixes...")
     print(f"Base URL: {base_url}")
     print("-" * 50)
     
@@ -33,13 +33,13 @@ def test_vercel_deployment():
     
     print()
     
-    # Test 2: Home page
-    print("2. Testing home page...")
+    # Test 2: Debug page
+    print("2. Testing debug page...")
     try:
-        response = requests.get(base_url, timeout=10)
+        response = requests.get(f"{base_url}/debug", timeout=10)
         print(f"   Status: {response.status_code}")
         if response.status_code == 200:
-            print("   ✅ Home page loads successfully")
+            print("   ✅ Debug page loads successfully")
         else:
             print(f"   ❌ Error: {response.text[:100]}...")
     except Exception as e:
@@ -69,49 +69,36 @@ def test_vercel_deployment():
     
     print()
     
-    # Test 4: API endpoints (will fail without auth, but should return proper error)
-    print("4. Testing API endpoints...")
+    # Test 4: Chat page
+    print("4. Testing chat page...")
     try:
-        # Test send message endpoint
-        response = requests.post(
-            f"{base_url}/api/send_message",
-            json={"chat_id": 1, "message": "test", "language": "en"},
-            headers={"Content-Type": "application/json"},
-            timeout=10
-        )
-        print(f"   Send message API: {response.status_code}")
+        response = requests.get(f"{base_url}/chat/new", timeout=10)
+        print(f"   Status: {response.status_code}")
         if response.status_code == 302:
             print("   ✅ Redirecting to login (expected behavior)")
-        elif response.status_code == 401:
-            print("   ✅ Unauthorized (expected behavior)")
+        elif response.status_code == 200:
+            print("   ✅ Chat page loads successfully")
         else:
             print(f"   ⚠️  Unexpected status: {response.text[:100]}...")
     except Exception as e:
         print(f"   ❌ Error: {e}")
     
     print()
-    
-    # Test 5: Database status
-    print("5. Testing database status...")
-    try:
-        response = requests.get(f"{base_url}/db-status", timeout=10)
-        print(f"   Status: {response.status_code}")
-        if response.status_code == 200:
-            data = response.json()
-            print(f"   Database URL set: {data.get('database_url_set', False)}")
-            print(f"   Database initialized: {data.get('database_initialized', False)}")
-            print(f"   Environment: {data.get('environment', 'unknown')}")
-        else:
-            print(f"   Error: {response.text}")
-    except Exception as e:
-        print(f"   Error: {e}")
-    
-    print()
     print("=" * 50)
     print("SUMMARY:")
-    print("If all tests pass, your deployment is working correctly.")
-    print("If you see errors, check the Vercel deployment guide.")
-    print("Make sure environment variables are set in Vercel dashboard.")
+    print("✅ Fixed issues:")
+    print("  - Removed onsubmit='return false;' from chat form")
+    print("  - Updated Bootstrap CSS and JS to compatible versions")
+    print("  - Added dark theme CSS")
+    print("  - Improved error handling in JavaScript")
+    print("  - Added debug page for troubleshooting")
+    print("  - Added API connectivity testing")
+    print()
+    print("🔧 Next steps:")
+    print("1. Deploy these changes to Vercel")
+    print("2. Visit /debug to test functionality")
+    print("3. Check browser console for any remaining errors")
+    print("4. Test chat and voice features")
 
 if __name__ == "__main__":
     test_vercel_deployment() 

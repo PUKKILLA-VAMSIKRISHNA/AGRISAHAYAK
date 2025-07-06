@@ -295,6 +295,7 @@ def setup_app(app):
             app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', protected_api_text_to_speech, methods=['POST'])
             app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', protected_api_speech_to_text, methods=['POST'])
             app.add_url_rule('/profile', 'profile', protected_profile, methods=['GET', 'POST'])
+        app.add_url_rule('/debug', 'debug', debug)
         else:
             # Add placeholder routes for protected routes
             app.add_url_rule('/logout', 'logout', maintenance_route)
@@ -309,6 +310,7 @@ def setup_app(app):
             app.add_url_rule('/api/text_to_speech', 'api_text_to_speech', maintenance_route, methods=['POST'])
             app.add_url_rule('/api/speech_to_text', 'api_speech_to_text', maintenance_route, methods=['POST'])
             app.add_url_rule('/profile', 'profile', maintenance_route, methods=['GET', 'POST'])
+            app.add_url_rule('/debug', 'debug', debug)
         
         # Add a simple health check route that doesn't require database
         def health_check():
@@ -348,6 +350,45 @@ def setup_app(app):
         
         app.add_url_rule('/db-status', 'db_status', db_status)
         
+        # Add a static file test endpoint
+        def test_static_files():
+            import os
+            static_files = [
+                'css/style.css',
+                'js/main.js',
+                'js/chat.js',
+                'js/voice.js'
+            ]
+            
+            results = {}
+            for file_path in static_files:
+                try:
+                    full_path = os.path.join('static', file_path)
+                    if os.path.exists(full_path):
+                        results[file_path] = {
+                            'exists': True,
+                            'size': os.path.getsize(full_path)
+                        }
+                    else:
+                        results[file_path] = {
+                            'exists': False,
+                            'error': 'File not found'
+                        }
+                except Exception as e:
+                    results[file_path] = {
+                        'exists': False,
+                        'error': str(e)
+                    }
+            
+            return jsonify({
+                'static_files': results,
+                'static_folder': app.static_folder,
+                'static_url_path': app.static_url_path,
+                'environment': 'vercel' if os.environ.get('VERCEL') else 'local'
+            })
+        
+        app.add_url_rule('/test-static', 'test_static', test_static_files)
+        
         # Add favicon route
         def favicon():
             # Return a simple 1x1 transparent PNG as favicon
@@ -364,10 +405,22 @@ def setup_app(app):
         app.add_url_rule('/favicon.ico', 'favicon', favicon)
         app.add_url_rule('/favicon.png', 'favicon_png', favicon)  # Handle .png requests too
         
+        # Add favicon serving from static folder
+        def serve_favicon():
+            try:
+                return app.send_static_file('images/favicon.ico')
+            except:
+                return favicon()  # Fallback to generated favicon
+        
         # Add static file routes for Vercel
         def serve_static_file(filename):
-            return app.send_static_file(filename)
+            try:
+                return app.send_static_file(filename)
+            except Exception as e:
+                print(f"Error serving static file {filename}: {e}")
+                return f"Static file {filename} not found", 404
         
+        # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
         
         # Add a simple index route that doesn't require database

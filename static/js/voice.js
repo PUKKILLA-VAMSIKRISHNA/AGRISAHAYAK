@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if browser supports speech recognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
-    if (SpeechRecognition) {
+    if (SpeechRecognition && voiceButton) {
         const recognition = new SpeechRecognition();
         
         // Configure recognition
@@ -88,17 +88,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Browser doesn't support speech recognition - use server-side fallback
         console.log('Web Speech API not supported, using server-side speech recognition');
         
-        let isRecording = false;
-        
-        voiceButton.addEventListener('click', function() {
-            if (isRecording) {
-                stopServerSideSpeechRecognition();
-                isRecording = false;
-            } else {
-                startServerSideSpeechRecognition();
-                isRecording = true;
-            }
-        });
+        if (voiceButton) {
+            let isRecording = false;
+            
+            voiceButton.addEventListener('click', function() {
+                if (isRecording) {
+                    stopServerSideSpeechRecognition();
+                    isRecording = false;
+                } else {
+                    startServerSideSpeechRecognition();
+                    isRecording = true;
+                }
+            });
+        }
     }
     
     // Map language codes to speech recognition language codes

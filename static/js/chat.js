@@ -25,14 +25,51 @@ document.addEventListener('DOMContentLoaded', function() {
         languageSelect: !!languageSelect
     });
     
+    // Test API connectivity
+    function testAPI() {
+        console.log('Testing API connectivity...');
+        fetch('/health', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('Health check response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Health check data:', data);
+            if (data.database === 'connected') {
+                console.log('✅ Database is connected');
+            } else {
+                console.log('❌ Database is not connected');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Health check failed:', error);
+        });
+    }
+    
+    // Run API test on page load
+    testAPI();
+    
     // Initialize chat - scroll to bottom
     scrollToBottom();
     
     // Event listeners
-    messageForm.addEventListener('submit', sendMessage);
-    languageSelect.addEventListener('change', changeLanguage);
-    translateChatButton.addEventListener('click', translateChat);
-    textToSpeechToggle.addEventListener('click', toggleTextToSpeech);
+    if (messageForm) {
+        messageForm.addEventListener('submit', sendMessage);
+    }
+    if (languageSelect) {
+        languageSelect.addEventListener('change', changeLanguage);
+    }
+    if (translateChatButton) {
+        translateChatButton.addEventListener('click', translateChat);
+    }
+    if (textToSpeechToggle) {
+        textToSpeechToggle.addEventListener('click', toggleTextToSpeech);
+    }
     
     // Set up play buttons for bot messages
     setupPlayButtons();
@@ -46,6 +83,10 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Empty message, returning');
             return;
         }
+        
+        console.log('Message to send:', message);
+        console.log('Chat ID:', chatId);
+        console.log('Current language:', currentLanguage);
         
         console.log('Sending message:', message);
         
