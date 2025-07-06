@@ -359,4 +359,123 @@
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voice.js') }}"></script>
+
+<!-- Fallback chat functionality (embedded for reliability) -->
+<script>
+// Fallback chat functionality if external files fail to load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Chat fallback loaded');
+    
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const chatContainer = document.getElementById('chat-container');
+    const chatId = document.getElementById('chat-id');
+    const typingIndicator = document.getElementById('typing-indicator');
+    
+    if (!messageForm || !messageInput || !chatContainer || !chatId) {
+        console.error('Required chat elements not found');
+        return;
+    }
+    
+    console.log('Chat elements found, setting up fallback functionality');
+    
+    // Simple message sending function
+    function sendMessage(e) {
+        e.preventDefault();
+        console.log('Fallback sendMessage called');
+        
+        const message = messageInput.value.trim();
+        if (!message) {
+            console.log('Empty message, returning');
+            return;
+        }
+        
+        console.log('Sending message:', message);
+        
+        // Clear input
+        messageInput.value = '';
+        
+        // Add user message to UI
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.className = 'message message-user';
+        userMessageDiv.innerHTML = `
+            <div class="message-content">${message}</div>
+            <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+        `;
+        chatContainer.appendChild(userMessageDiv);
+        
+        // Show typing indicator
+        if (typingIndicator) {
+            typingIndicator.style.display = 'block';
+            chatContainer.appendChild(typingIndicator);
+        }
+        
+        // Scroll to bottom
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        // Send message to server
+        fetch('/api/send_message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                chat_id: chatId.value,
+                message: message,
+                language: 'en'
+            })
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            // Hide typing indicator
+            if (typingIndicator) {
+                typingIndicator.style.display = 'none';
+            }
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Add bot response to UI
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.className = 'message message-bot';
+            botMessageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="markdown-content">${data.response}</div>
+                </div>
+                <div class="message-time">
+                    ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <button class="btn btn-sm btn-link text-light p-0 ms-2 play-message" data-message-id="${data.message_id}">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+            `;
+            chatContainer.appendChild(botMessageDiv);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (typingIndicator) {
+                typingIndicator.style.display = 'none';
+            }
+            showNotification('There was an error sending your message. Please try again. Error: ' + error.message, 'danger');
+        });
+    }
+    
+    // Add event listener to form
+    messageForm.addEventListener('submit', sendMessage);
+    
+    console.log('Fallback chat functionality initialized');
+});
+</script>
 {% endblock %}
