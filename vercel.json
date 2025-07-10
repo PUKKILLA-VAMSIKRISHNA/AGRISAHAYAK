@@ -11,9 +11,9 @@
     }
   ],
   "routes": [
-    { "src": "/static/(.*)", "dest": "/main.py" },
-    { "src": "/favicon.ico", "dest": "/main.py" },
-    { "src": "/favicon.png", "dest": "/main.py" },
+    { "src": "/(robots.txt|sitemap.xml|favicon.ico|favicon.png)", "dest": "/public/$1" },
+    { "src": "/static/(.*)", "dest": "/public/static/$1" },
+    { "src": "/images/(.*)", "dest": "/public/images/$1" },
     { "src": "/(.*)", "dest": "/main.py" }
   ],
   "env": {
