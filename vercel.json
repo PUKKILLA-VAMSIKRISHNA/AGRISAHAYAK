@@ -13,7 +13,6 @@
   "routes": [
     { "src": "/(robots.txt|sitemap.xml|favicon.ico|favicon.png)", "dest": "/$1" },
     { "src": "/static/(.*)", "dest": "/static/$1" },
-    { "src": "/images/(.*)", "dest": "/images/$1" },
     { "src": "/(.*)", "dest": "/main.py" }
   ],
   "env": {
