@@ -356,13 +356,56 @@ def api_get_youtube_videos():
     return jsonify({'videos': videos})
 
 def api_translate():
-    data = request.json
-    text = data.get('text')
-    target_language = data.get('language')
+    try:
+        data = request.json
+        text = data.get('text')
+        target_language = data.get('language')
+        
+        print(f"Translation request - Text: {text[:50]}..., Language: {target_language}")
+        
+        if not text or not target_language:
+            return jsonify({'error': 'Missing text or language parameter'}), 400
+        
+        # Check if API key is available
+        gemini_api_key = current_app.config.get('GEMINI_API_KEY')
+        if not gemini_api_key:
+            print("GEMINI_API_KEY is not configured")
+            return jsonify({'error': 'Translation service not properly configured'}), 500
+        
+        translated_text = translate_text(text, target_language)
+        
+        print(f"Translation result: {translated_text[:50]}...")
+        
+        return jsonify({'translated_text': translated_text})
     
-    translated_text = translate_text(text, target_language)
-    
-    return jsonify({'translated_text': translated_text})
+    except Exception as e:
+        print(f"Translation API error: {str(e)}")
+        import traceback
+        print(f"Full traceback: {traceback.format_exc()}")
+        return jsonify({'error': f'Translation failed: {str(e)}'}), 500
+
+def api_test_translation():
+    """Test endpoint to verify translation functionality"""
+    try:
+        test_text = "Hello, how are you?"
+        test_language = "hi"
+        
+        result = translate_text(test_text, test_language)
+        
+        return jsonify({
+            'success': True,
+            'original_text': test_text,
+            'target_language': test_language,
+            'translated_text': result,
+            'api_key_configured': bool(current_app.config.get('GEMINI_API_KEY'))
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'api_key_configured': bool(current_app.config.get('GEMINI_API_KEY'))
+        }), 500
 
 def api_text_to_speech():
     data = request.json
