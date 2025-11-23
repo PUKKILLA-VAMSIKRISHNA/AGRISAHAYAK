@@ -4,14 +4,18 @@ print('ENV VARS:', {k: os.environ.get(k) for k in [
     'DATABASE_URL', 'SECRET_KEY', 'BASE_URL', 'GEMINI_API_KEY'
 ]})
 from flask import Flask, jsonify, render_template
-from dotenv import load_dotenv
 import re
+
+# Try to import and load dotenv (optional - not needed on Vercel where env vars are set directly)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # dotenv not available, but that's okay - Vercel provides env vars directly
+    pass
 
 # Import extensions
 from extensions import db, login_manager, mail, migrate
-
-# Load environment variables
-load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
