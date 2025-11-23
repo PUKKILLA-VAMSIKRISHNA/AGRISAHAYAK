@@ -10,6 +10,9 @@
       }
     }
   ],
+  "include": [
+    "public/**/*"
+  ],
   "routes": [
     { "src": "/static/(.*)", "dest": "/static/$1" },
     { "src": "/images/(.*)", "dest": "/main.py" },
