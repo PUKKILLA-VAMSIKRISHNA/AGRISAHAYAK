@@ -95,7 +95,9 @@ def translate_text(text, target_language):
         genai.configure(api_key=GEMINI_API_KEY)
         
         # Load language data to get the full language name
-        json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+        # Try static folder first (created by build.py), fallback to public
+        base_folder = 'static' if os.path.exists('static') else 'public'
+        json_path = os.path.join(os.path.dirname(__file__), base_folder, 'data', 'languages.json')
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
                 languages = json.load(f)
@@ -110,11 +112,13 @@ def translate_text(text, target_language):
         
         language_name = next((lang['name'] for lang in languages if lang['code'] == target_language), target_language)
         
+        print(f"Translating to {language_name} (code: {target_language})")
         prompt = f"Translate the following text to {language_name}. Return only the translated text without any explanations:\n\n{text}"
         
         response = generate_content_with_fallback(prompt)
         
         translated_text = response.text.strip()
+        print(f"Translation result: {translated_text[:100]}...")
         return translated_text
     
     except Exception as e:

@@ -24,6 +24,13 @@ def copy_static_files():
             subindent = ' ' * 2 * (level + 1)
             for file in files:
                 print(f"{subindent}{file}")
+        
+        # Check if languages.json was copied
+        languages_path = os.path.join(static_dir, 'data', 'languages.json')
+        if os.path.exists(languages_path):
+            print(f"✓ languages.json found at {languages_path}")
+        else:
+            print(f"✗ languages.json NOT found at {languages_path}")
     else:
         print("No public folder found")
         sys.exit(1)
