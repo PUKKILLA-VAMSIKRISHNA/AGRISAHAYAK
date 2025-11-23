@@ -21,7 +21,9 @@ from extensions import db, login_manager, mail, migrate
 logging.basicConfig(level=logging.DEBUG)
 
 # Create Flask app - enable static serving
-app = Flask(__name__, static_folder='public', static_url_path='/static')
+# Try static folder first (created by build.py), fallback to public
+static_folder = 'static' if os.path.exists('static') else 'public'
+app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
 
 # Configure static file serving for Vercel
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
