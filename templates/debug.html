@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2>Debug Page - AgriSahayak</h2>
+            <div class="card">
+                <div class="card-header">
+                    <h5>System Status</h5>
+                </div>
+                <div class="card-body">
+                    <div id="status-container">
+                        <p>Loading status...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Test Chat Functionality</h5>
+                </div>
+                <div class="card-body">
+                    <form id="test-form">
+                        <div class="mb-3">
+                            <label for="test-message" class="form-label">Test Message:</label>
+                            <input type="text" class="form-control" id="test-message" value="Hello, how are you?" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Send Test Message</button>
+                    </form>
+                    <div id="test-result" class="mt-3"></div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Test Voice Functionality</h5>
+                </div>
+                <div class="card-body">
+                    <button id="test-voice" class="btn btn-outline-success">
+                        <i class="fas fa-microphone"></i> Test Voice Recognition
+                    </button>
+                    <div id="voice-result" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Debug page loaded');
+    
+    // Test system status
+    function checkSystemStatus() {
+        const statusContainer = document.getElementById('status-container');
+        
+        // Test health endpoint
+        fetch('/health')
+            .then(response => response.json())
+            .then(data => {
+                let statusHTML = '<h6>Health Check:</h6>';
+                statusHTML += `<p>Status: <span class="badge bg-${data.status === 'healthy' ? 'success' : 'danger'}">${data.status}</span></p>`;
+                statusHTML += `<p>Database: <span class="badge bg-${data.database === 'connected' ? 'success' : 'danger'}">${data.database}</span></p>`;
+                statusHTML += `<p>Message: ${data.message}</p>`;
+                
+                statusContainer.innerHTML = statusHTML;
+            })
+            .catch(error => {
+                statusContainer.innerHTML = `<p class="text-danger">Error: ${error.message}</p>`;
+            });
+    }
+    
+    // Test chat functionality
+    function testChat() {
+        const testForm = document.getElementById('test-form');
+        const testResult = document.getElementById('test-result');
+        
+        testForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const message = document.getElementById('test-message').value;
+            testResult.innerHTML = '<p class="text-info">Sending test message...</p>';
+            
+            fetch('/api/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    chat_id: 1,
+                    message: message,
+                    language: 'en'
+                })
+            })
+            .then(response => {
+                console.log('Test response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Test response data:', data);
+                testResult.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6>✅ Chat API Working!</h6>
+                        <p><strong>Response:</strong> ${data.response.substring(0, 100)}...</p>
+                        <p><strong>Message ID:</strong> ${data.message_id}</p>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('Test error:', error);
+                testResult.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Chat API Error</h6>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>This might be due to authentication or database issues.</p>
+                    </div>
+                `;
+            });
+        });
+    }
+    
+    // Test voice functionality
+    function testVoice() {
+        const testVoiceBtn = document.getElementById('test-voice');
+        const voiceResult = document.getElementById('voice-result');
+        
+        testVoiceBtn.addEventListener('click', function() {
+            voiceResult.innerHTML = '<p class="text-info">Testing voice recognition...</p>';
+            
+            // Check if Web Speech API is available
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (SpeechRecognition) {
+                voiceResult.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6>✅ Web Speech API Available</h6>
+                        <p>Your browser supports voice recognition.</p>
+                    </div>
+                `;
+            } else {
+                voiceResult.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h6>⚠️ Web Speech API Not Available</h6>
+                        <p>Your browser doesn't support voice recognition. The app will use server-side fallback.</p>
+                    </div>
+                `;
+            }
+        });
+    }
+    
+    // Initialize tests
+    checkSystemStatus();
+    testChat();
+    testVoice();
+});
+</script>
+{% endblock %} 
