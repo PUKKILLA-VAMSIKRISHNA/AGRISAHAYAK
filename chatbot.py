@@ -9,6 +9,45 @@ def load_crop_data():
     with open('public/data/crops.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
+def generate_content_with_fallback(prompt):
+    """
+    Generate content using Gemini API, trying multiple model names if one fails.
+    Returns the response from the first successful model.
+    """
+    model_names = [
+        'gemini-1.5-flash-latest',  # Latest flash model
+        'gemini-flash-latest',       # Alternative flash model name
+        'gemini-1.5-flash-002',      # Specific flash version
+        'gemini-1.5-pro',            # Pro model (more stable)
+        'gemini-1.5-pro-latest',     # Latest pro model
+        'gemini-pro'                 # Fallback to older stable model
+    ]
+    
+    last_error = None
+    for model_name in model_names:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
+            current_app.logger.debug(f"Successfully used Gemini model: {model_name}")
+            return response
+        except Exception as e:
+            error_msg = str(e)
+            last_error = e
+            # Check if it's a 404 or model not found error
+            if '404' in error_msg or 'not found' in error_msg.lower() or 'not supported' in error_msg.lower():
+                current_app.logger.debug(f"Model {model_name} not available: {error_msg}")
+                continue
+            else:
+                # For other errors, log and re-raise
+                current_app.logger.error(f"Error with model {model_name}: {error_msg}")
+                raise
+    
+    # If all models failed, raise the last error
+    if last_error:
+        raise last_error
+    else:
+        raise Exception("No available Gemini models found")
+
 def get_chatbot_response(message, user_profile, language='en'):
     """
     Get a response from the Gemini 2.0 Flash model
@@ -39,9 +78,8 @@ def get_chatbot_response(message, user_profile, language='en'):
         If they ask for videos, mention that you can suggest YouTube videos for them to watch.
         """
         
-        # Generate response using Gemini
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(
+        # Generate response using Gemini with fallback support
+        response = generate_content_with_fallback(
             f"{context}\n\n{instructions}\n\nFarmer's query: {message}"
         )
         
@@ -94,9 +132,8 @@ def get_crop_recommendations(soil_type, soil_ph, location, language='en'):
         Format the response in a clear, structured way.
         """
         
-        # Generate response using Gemini
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
+        # Generate response using Gemini with fallback support
+        response = generate_content_with_fallback(prompt)
         
         recommendations = response.text
         
