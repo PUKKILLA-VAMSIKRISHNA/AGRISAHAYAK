@@ -25,6 +25,9 @@ app = Flask(__name__, static_folder='public', static_url_path='/static')
 
 # Configure static file serving for Vercel
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
+
+# Add additional static folder for images
+from flask import send_from_directory
 app.secret_key = os.environ.get('SECRET_KEY', 'Vamsi@123')
 
 # Configure the database
@@ -449,7 +452,9 @@ def setup_app(app):
         # Add direct image serving route
         def serve_images(filename):
             try:
-                return app.send_static_file(f'images/{filename}')
+                import os
+                images_dir = os.path.join(app.static_folder, 'images')
+                return send_from_directory(images_dir, filename)
             except Exception as e:
                 print(f"Error serving image {filename}: {e}")
                 return f"Image {filename} not found", 404
@@ -568,6 +573,7 @@ def setup_app(app):
             </html>
             """.format(path), 404
         
+        # Add catch-all route (must be last)
         app.add_url_rule('/<path:path>', 'catch_all', catch_all)
 
         def developers():
