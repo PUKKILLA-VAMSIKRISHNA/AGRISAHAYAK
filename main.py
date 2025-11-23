@@ -20,8 +20,8 @@ from extensions import db, login_manager, mail, migrate
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Create Flask app
-app = Flask(__name__, static_folder='public', static_url_path='/static')
+# Create Flask app - disable static serving to let Vercel handle it
+app = Flask(__name__, static_folder=None)
 
 # Configure static file serving for Vercel
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
