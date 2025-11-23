@@ -20,9 +20,5 @@
     "PYTHONPATH": ".",
     "FLASK_ENV": "production"
   },
-  "functions": {
-    "main.py": {
-      "maxDuration": 30
-    }
-  }
+ 
 } 
