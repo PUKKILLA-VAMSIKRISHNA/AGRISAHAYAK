@@ -95,8 +95,18 @@ def translate_text(text, target_language):
         genai.configure(api_key=GEMINI_API_KEY)
         
         # Load language data to get the full language name
-        with open('public/data/languages.json', 'r', encoding='utf-8') as f:
-            languages = json.load(f)
+        json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                languages = json.load(f)
+        except FileNotFoundError:
+            # Fallback languages if file not found
+            languages = [
+                {"code": "en", "name": "English", "native_name": "English"},
+                {"code": "hi", "name": "Hindi", "native_name": "हिन्दी"},
+                {"code": "ta", "name": "Tamil", "native_name": "தமிழ்"},
+                {"code": "te", "name": "Telugu", "native_name": "తెలుగు"}
+            ]
         
         language_name = next((lang['name'] for lang in languages if lang['code'] == target_language), target_language)
         

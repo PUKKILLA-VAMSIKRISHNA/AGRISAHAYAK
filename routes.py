@@ -1,4 +1,5 @@
 import json
+import os
 from flask import render_template, redirect, url_for, flash, request, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
@@ -114,8 +115,18 @@ def register():
             return render_template('register.html')
     
     # Load available languages
-    with open('public/data/languages.json', 'r', encoding='utf-8') as f:
-        languages = json.load(f)
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            languages = json.load(f)
+    except FileNotFoundError:
+        # Fallback languages if file not found
+        languages = [
+            {"code": "en", "name": "English", "native_name": "English"},
+            {"code": "hi", "name": "Hindi", "native_name": "हिन्दी"},
+            {"code": "ta", "name": "Tamil", "native_name": "தமிழ்"},
+            {"code": "te", "name": "Telugu", "native_name": "తెలుగు"}
+        ]
     
     return render_template('register.html', languages=languages)
 
@@ -243,8 +254,18 @@ def chat(chat_id):
     messages = Message.query.filter_by(chat_id=chat.id).order_by(Message.created_at).all()
     
     # Load available languages
-    with open('public/data/languages.json', 'r', encoding='utf-8') as f:
-        languages = json.load(f)
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            languages = json.load(f)
+    except FileNotFoundError:
+        # Fallback languages if file not found
+        languages = [
+            {"code": "en", "name": "English", "native_name": "English"},
+            {"code": "hi", "name": "Hindi", "native_name": "हिन्दी"},
+            {"code": "ta", "name": "Tamil", "native_name": "தமிழ்"},
+            {"code": "te", "name": "Telugu", "native_name": "తెలుగు"}
+        ]
     
     return render_template('chat.html', chat=chat, messages=messages, languages=languages)
 
@@ -386,7 +407,17 @@ def profile():
         return redirect(url_for('profile'))
     
     # Load available languages
-    with open('public/data/languages.json', 'r', encoding='utf-8') as f:
-        languages = json.load(f)
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            languages = json.load(f)
+    except FileNotFoundError:
+        # Fallback languages if file not found
+        languages = [
+            {"code": "en", "name": "English", "native_name": "English"},
+            {"code": "hi", "name": "Hindi", "native_name": "हिन्दी"},
+            {"code": "ta", "name": "Tamil", "native_name": "தமிழ்"},
+            {"code": "te", "name": "Telugu", "native_name": "తెలుగు"}
+        ]
     
     return render_template('profile.html', profile=profile, languages=languages)
