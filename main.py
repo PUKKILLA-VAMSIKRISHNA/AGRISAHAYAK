@@ -569,6 +569,46 @@ def setup_app(app):
         
         app.add_url_rule('/debug-static-files', 'debug_static_files', debug_static_files)
         
+        # Add debug route to see what files exist in deployment
+        def debug_deployment():
+            import os
+            import json
+            
+            # List all files in the deployment
+            all_files = []
+            for root, dirs, files in os.walk('.'):
+                level = root.replace('.', '').count(os.sep)
+                indent = '  ' * level
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    size = os.path.getsize(file_path)
+                    all_files.append({
+                        'path': file_path,
+                        'size': size,
+                        'type': 'file'
+                    })
+                for dir in dirs:
+                    dir_path = os.path.join(root, dir)
+                    all_files.append({
+                        'path': dir_path,
+                        'size': 0,
+                        'type': 'directory'
+                    })
+            
+            # Check specific directories
+            checks = {
+                'public_exists': os.path.exists('public'),
+                'static_exists': os.path.exists('static'),
+                'public_contents': os.listdir('public') if os.path.exists('public') else [],
+                'static_contents': os.listdir('static') if os.path.exists('static') else [],
+                'current_dir': os.getcwd(),
+                'all_files': all_files[:50]  # Limit to first 50 files
+            }
+            
+            return jsonify(checks)
+        
+        app.add_url_rule('/debug-deployment', 'debug_deployment', debug_deployment)
+        
         # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
         
