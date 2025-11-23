@@ -8,10 +8,11 @@
         "maxLambdaSize": "50mb",
         "runtime": "python3.9"
       }
+    },
+    {
+      "src": "public/**/*",
+      "use": "@vercel/static"
     }
-  ],
-  "include": [
-    "public/**/*"
   ],
   "routes": [
     { "src": "/static/(.*)", "dest": "/static/$1" },
