@@ -50,9 +50,9 @@ def generate_content_with_fallback(prompt):
     import google.generativeai as genai
     
     model_names = [
-        'gemini-1.5-flash',          # Stable flash model
+        'gemini-1.5-flash-latest',  # Latest flash model
+        'gemini-flash-latest',       # Alternative flash model name
         'gemini-1.5-flash-002',      # Specific flash version
-        'gemini-1.5-flash-latest',   # Latest flash model (try last)
         'gemini-1.5-pro',            # Pro model (more stable)
         'gemini-1.5-pro-latest',     # Latest pro model
         'gemini-pro'                 # Fallback to older stable model
@@ -92,12 +92,7 @@ def translate_text(text, target_language):
         import google.generativeai as genai
         
         GEMINI_API_KEY = current_app.config['GEMINI_API_KEY']
-        if not GEMINI_API_KEY or GEMINI_API_KEY == "":
-            current_app.logger.error("GEMINI_API_KEY is missing or empty")
-            return text
-            
         genai.configure(api_key=GEMINI_API_KEY)
-        current_app.logger.debug(f"Configured Gemini API for translation to {target_language}")
         
         # Load language data to get the full language name
         json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
@@ -117,16 +112,10 @@ def translate_text(text, target_language):
         
         prompt = f"Translate the following text to {language_name}. Return only the translated text without any explanations:\n\n{text}"
         
-        current_app.logger.debug(f"Attempting translation to {language_name} using Gemini")
         response = generate_content_with_fallback(prompt)
         
-        if response and hasattr(response, 'text'):
-            translated_text = response.text.strip()
-            current_app.logger.debug(f"Translation successful: {translated_text[:50]}...")
-            return translated_text
-        else:
-            current_app.logger.error("Translation response is empty or invalid")
-            return text
+        translated_text = response.text.strip()
+        return translated_text
     
     except Exception as e:
         current_app.logger.error(f"Translation error: {str(e)}")

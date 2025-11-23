@@ -1,16 +1,13 @@
-import json
 import os
+import json
+import requests
+import google.generativeai as genai
 from flask import current_app
 
 # Load crop data
 def load_crop_data():
-    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'crops.json')
-    try:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        # Return empty crop data if file not found
-        return {}
+    with open('public/data/crops.json', 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 def generate_content_with_fallback(prompt):
     """
@@ -18,9 +15,9 @@ def generate_content_with_fallback(prompt):
     Returns the response from the first successful model.
     """
     model_names = [
-        'gemini-1.5-flash',          # Stable flash model
+        'gemini-1.5-flash-latest',  # Latest flash model
+        'gemini-flash-latest',       # Alternative flash model name
         'gemini-1.5-flash-002',      # Specific flash version
-        'gemini-1.5-flash-latest',   # Latest flash model (try last)
         'gemini-1.5-pro',            # Pro model (more stable)
         'gemini-1.5-pro-latest',     # Latest pro model
         'gemini-pro'                 # Fallback to older stable model

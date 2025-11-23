@@ -11,13 +11,13 @@
     }
   ],
   "routes": [
-    { "src": "/images/(.*)", "dest": "/static/images/$1" },
+    { "src": "/images/(.*)", "dest": "/public/images/$1" },
+    { "src": "/(robots.txt|sitemap.xml|favicon.ico|favicon.png)", "dest": "/$1" },
     { "src": "/static/(.*)", "dest": "/static/$1" },
-    { "src": "/(robots.txt|sitemap.xml|favicon.ico|favicon.png)", "dest": "/static/images/$1" },
     { "src": "/(.*)", "dest": "/main.py" }
   ],
   "env": {
     "PYTHONPATH": ".",
     "FLASK_ENV": "production"
   }
-}
+} 
