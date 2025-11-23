@@ -50,11 +50,10 @@ def generate_content_with_fallback(prompt):
     import google.generativeai as genai
     
     model_names = [
-        'gemini-1.5-flash-latest',  # Latest flash model
-        'gemini-flash-latest',       # Alternative flash model name
-        'gemini-1.5-flash-002',      # Specific flash version
+        'gemini-1.5-flash-002',      # Specific flash version (more stable)
+        'gemini-1.5-flash',          # Standard flash model
         'gemini-1.5-pro',            # Pro model (more stable)
-        'gemini-1.5-pro-latest',     # Latest pro model
+        'gemini-1.5-pro-002',        # Specific pro version
         'gemini-pro'                 # Fallback to older stable model
     ]
     
