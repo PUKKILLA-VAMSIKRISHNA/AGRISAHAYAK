@@ -20,8 +20,8 @@ from extensions import db, login_manager, mail, migrate
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Create Flask app - disable static serving to let Vercel handle it
-app = Flask(__name__, static_folder=None)
+# Create Flask app - enable static serving
+app = Flask(__name__, static_folder='public', static_url_path='/static')
 
 # Configure static file serving for Vercel
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 year cache
@@ -294,8 +294,8 @@ def setup_app(app):
         # Define debug_static_files function first
         def debug_static_files():
             import os
-            static_folder = os.path.join(os.path.dirname(__file__), 'public')
-            static_url_path = '/static'
+            static_folder = app.static_folder
+            static_url_path = app.static_url_path
             
             # List all files in public folder
             static_files = []
@@ -311,8 +311,8 @@ def setup_app(app):
                 'static_files': static_files,
                 'environment': 'vercel' if os.environ.get('VERCEL') else 'local',
                 'app_config': {
-                    'static_folder': os.path.join(os.path.dirname(__file__), 'public'),
-                    'static_url_path': '/static'
+                    'static_folder': app.static_folder,
+                    'static_url_path': app.static_url_path
                 }
             })
         
@@ -419,8 +419,8 @@ def setup_app(app):
             
             return jsonify({
                 'static_files': results,
-                'static_folder': os.path.join(os.path.dirname(__file__), 'public'),
-                'static_url_path': '/static',
+                'static_folder': app.static_folder,
+                'static_url_path': app.static_url_path,
                 'environment': 'vercel' if os.environ.get('VERCEL') else 'local'
             })
         
@@ -445,9 +445,7 @@ def setup_app(app):
         # Add favicon serving from public folder
         def serve_favicon():
             try:
-                import os
-                favicon_path = os.path.join(os.path.dirname(__file__), 'public', 'images', 'favicon.ico')
-                return send_from_directory(os.path.dirname(favicon_path), 'favicon.ico')
+                return app.send_static_file('images/favicon.ico')
             except:
                 return favicon()  # Fallback to generated favicon
         
@@ -455,7 +453,7 @@ def setup_app(app):
         def serve_images(filename):
             try:
                 import os
-                images_dir = os.path.join(os.path.dirname(__file__), 'public', 'images')
+                images_dir = os.path.join(app.static_folder, 'images')
                 return send_from_directory(images_dir, filename)
             except Exception as e:
                 print(f"Error serving image {filename}: {e}")
@@ -510,9 +508,9 @@ def setup_app(app):
         # Add debug route to check image paths
         def debug_images():
             import os
-            images_dir = os.path.join(os.path.dirname(__file__), 'public', 'images')
+            images_dir = os.path.join(app.static_folder, 'images')
             debug_info = {
-                'static_folder': os.path.join(os.path.dirname(__file__), 'public'),
+                'static_folder': app.static_folder,
                 'images_dir': images_dir,
                 'images_dir_exists': os.path.exists(images_dir),
                 'image_files': []

@@ -356,9 +356,9 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/main.js"></script>
-<script src="/static/js/chat.js"></script>
-<script src="/static/js/voice.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voice.js') }}"></script>
 
 <!-- Fallback chat functionality (embedded for reliability) -->
 <script>
