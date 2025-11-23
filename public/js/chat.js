@@ -240,35 +240,81 @@ document.addEventListener('DOMContentLoaded', function() {
         showNotification(`Language changed to ${languageSelect.options[languageSelect.selectedIndex].text}`, 'info');
     }
     
+    // Helper function to show notifications (copied from main.js)
+    function showNotification(message, type = 'success') {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        alertContainer.style.zIndex = '1050';
+        alertContainer.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(alertContainer);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            try {
+                // Try to use Bootstrap Alert if available
+                if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                    const bsAlert = new bootstrap.Alert(alertContainer);
+                    bsAlert.close();
+                } else {
+                    // Fallback: just remove the element
+                    alertContainer.remove();
+                }
+            } catch (error) {
+                // Fallback: just remove the element
+                alertContainer.remove();
+            }
+        }, 5000);
+    }
+    
     function translateChat() {
         // Get all bot messages
         const botMessages = document.querySelectorAll('.message-bot .markdown-content');
-        if (botMessages.length === 0) return;
+        if (botMessages.length === 0) {
+            showNotification('No messages to translate.', 'info');
+            return;
+        }
         
         showNotification('Translating chat messages...', 'info');
+        console.log('Starting translation for', botMessages.length, 'messages');
+        console.log('Current language:', currentLanguage);
         
-        botMessages.forEach(messageElement => {
+        botMessages.forEach((messageElement, index) => {
             const originalText = messageElement.textContent;
+            console.log(`Translating message ${index + 1}:`, originalText);
             
             fetch('/api/translate', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     text: originalText,
                     language: currentLanguage
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log(`Translation response status for message ${index + 1}:`, response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log(`Translation data for message ${index + 1}:`, data);
                 if (data.translated_text) {
                     messageElement.innerHTML = processMarkdown(data.translated_text);
+                    console.log(`Successfully translated message ${index + 1}`);
+                } else {
+                    console.warn(`No translated_text received for message ${index + 1}`);
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showNotification('Translation failed. Please try again.', 'danger');
+                console.error(`Translation error for message ${index + 1}:`, error);
+                showNotification(`Translation failed for message ${index + 1}: ${error.message}`, 'danger');
             });
         });
     }
