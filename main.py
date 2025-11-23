@@ -23,6 +23,18 @@ logging.basicConfig(level=logging.DEBUG)
 # Create Flask app - enable static serving
 # Try static folder first (created by build.py), fallback to public
 static_folder = 'static' if os.path.exists('static') else 'public'
+
+# If static folder doesn't exist or is empty, copy from public
+if not os.path.exists(static_folder) or not os.listdir(static_folder):
+    if os.path.exists('public'):
+        import shutil
+        if os.path.exists('static'):
+            shutil.rmtree('static')
+        shutil.copytree('public', 'static')
+        print(f"Copied public folder to {static_folder}")
+    else:
+        static_folder = 'public'
+
 app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
 
 # Configure static file serving for Vercel
