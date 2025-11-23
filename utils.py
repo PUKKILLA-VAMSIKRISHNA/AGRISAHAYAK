@@ -41,6 +41,48 @@ def get_weather_data(location):
         current_app.logger.error(f"Error fetching weather data: {str(e)}")
         return None
 
+def generate_content_with_fallback(prompt):
+    """
+    Generate content using Gemini API, trying multiple model names if one fails.
+    Returns the response from the first successful model.
+    Note: genai.configure() must be called before this function.
+    """
+    import google.generativeai as genai
+    
+    model_names = [
+        'gemini-1.5-flash-latest',  # Latest flash model
+        'gemini-flash-latest',       # Alternative flash model name
+        'gemini-1.5-flash-002',      # Specific flash version
+        'gemini-1.5-pro',            # Pro model (more stable)
+        'gemini-1.5-pro-latest',     # Latest pro model
+        'gemini-pro'                 # Fallback to older stable model
+    ]
+    
+    last_error = None
+    for model_name in model_names:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
+            current_app.logger.debug(f"Successfully used Gemini model: {model_name}")
+            return response
+        except Exception as e:
+            error_msg = str(e)
+            last_error = e
+            # Check if it's a 404 or model not found error
+            if '404' in error_msg or 'not found' in error_msg.lower() or 'not supported' in error_msg.lower():
+                current_app.logger.debug(f"Model {model_name} not available: {error_msg}")
+                continue
+            else:
+                # For other errors, log and re-raise
+                current_app.logger.error(f"Error with model {model_name}: {error_msg}")
+                raise
+    
+    # If all models failed, raise the last error
+    if last_error:
+        raise last_error
+    else:
+        raise Exception("No available Gemini models found")
+
 def translate_text(text, target_language):
     """
     Translate text to target language using Google Generative AI
@@ -60,8 +102,7 @@ def translate_text(text, target_language):
         
         prompt = f"Translate the following text to {language_name}. Return only the translated text without any explanations:\n\n{text}"
         
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
+        response = generate_content_with_fallback(prompt)
         
         translated_text = response.text.strip()
         return translated_text
