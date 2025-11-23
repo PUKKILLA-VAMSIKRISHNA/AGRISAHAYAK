@@ -609,7 +609,43 @@ def setup_app(app):
         
         app.add_url_rule('/debug-deployment', 'debug_deployment', debug_deployment)
         
-        # Always add static file route for Vercel
+        # Import static files module
+        import static_files
+        
+        # Add routes for specific static files using embedded content
+        def serve_css_style():
+            from flask import Response
+            content = static_files.get_css_style_css()
+            return Response(content, mimetype='text/css')
+        
+        def serve_js_main():
+            from flask import Response
+            content = static_files.get_js_main_js()
+            return Response(content, mimetype='application/javascript')
+        
+        def serve_js_chat():
+            from flask import Response
+            content = static_files.get_js_chat_js()
+            return Response(content, mimetype='application/javascript')
+        
+        def serve_js_voice():
+            from flask import Response
+            content = static_files.get_js_voice_js()
+            return Response(content, mimetype='application/javascript')
+        
+        def serve_languages_json():
+            from flask import Response
+            content = static_files.get_languages_json()
+            return Response(content, mimetype='application/json')
+        
+        # Register specific static file routes
+        app.add_url_rule('/static/css/style.css', 'css_style', serve_css_style)
+        app.add_url_rule('/static/js/main.js', 'js_main', serve_js_main)
+        app.add_url_rule('/static/js/chat.js', 'js_chat', serve_js_chat)
+        app.add_url_rule('/static/js/voice.js', 'js_voice', serve_js_voice)
+        app.add_url_rule('/static/data/languages.json', 'languages_json', serve_languages_json)
+        
+        # Keep the general static route for other files
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
         
         # Add a simple index route that doesn't require database

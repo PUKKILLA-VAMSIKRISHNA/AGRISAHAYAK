@@ -94,14 +94,12 @@ def translate_text(text, target_language):
         GEMINI_API_KEY = current_app.config['GEMINI_API_KEY']
         genai.configure(api_key=GEMINI_API_KEY)
         
-        # Load language data to get the full language name
-        # Try static folder first (created by build.py), fallback to public
-        base_folder = 'static' if os.path.exists('static') else 'public'
-        json_path = os.path.join(os.path.dirname(__file__), base_folder, 'data', 'languages.json')
+        # Load language data using embedded static files
         try:
-            with open(json_path, 'r', encoding='utf-8') as f:
-                languages = json.load(f)
-        except FileNotFoundError:
+            import static_files
+            languages_json = static_files.get_languages_json()
+            languages = json.loads(languages_json)
+        except (ImportError, json.JSONDecodeError):
             # Fallback languages if file not found
             languages = [
                 {"code": "en", "name": "English", "native_name": "English"},
