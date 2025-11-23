@@ -21,7 +21,25 @@ from extensions import db, login_manager, mail, migrate
 logging.basicConfig(level=logging.DEBUG)
 
 # Create Flask app - enable static serving
-# Try static folder first (created by build.py), fallback to public
+# Ensure static files are available in deployment
+def ensure_static_files():
+    """Copy public files to static folder for Vercel deployment"""
+    import shutil
+    public_dir = 'public'
+    static_dir = 'static'
+    
+    if os.path.exists(public_dir) and not os.path.exists(static_dir):
+        print(f"Copying {public_dir} to {static_dir} for deployment")
+        shutil.copytree(public_dir, static_dir)
+    elif os.path.exists(static_dir):
+        print(f"Static directory {static_dir} already exists")
+    else:
+        print(f"Warning: Neither {public_dir} nor {static_dir} found")
+
+# Ensure static files are available
+ensure_static_files()
+
+# Use static folder if available, fallback to public
 static_folder = 'static' if os.path.exists('static') else 'public'
 app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
 
