@@ -446,6 +446,14 @@ def setup_app(app):
             except:
                 return favicon()  # Fallback to generated favicon
         
+        # Add direct image serving route
+        def serve_images(filename):
+            try:
+                return app.send_static_file(f'images/{filename}')
+            except Exception as e:
+                print(f"Error serving image {filename}: {e}")
+                return f"Image {filename} not found", 404
+        
         # Add static file routes for Vercel
         def serve_static_file(filename):
             try:
@@ -491,6 +499,9 @@ def setup_app(app):
         
         # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
+        
+        # Add direct image serving route
+        app.add_url_rule('/images/<path:filename>', 'serve_images', serve_images)
         
         # Add a simple index route that doesn't require database
         def simple_index():
