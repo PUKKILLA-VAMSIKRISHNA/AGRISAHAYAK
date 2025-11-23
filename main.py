@@ -524,6 +524,39 @@ def setup_app(app):
         
         app.add_url_rule('/debug-images', 'debug_images', debug_images)
         
+        # Add debug route to check static files
+        def debug_static():
+            import os
+            static_folder = app.static_folder
+            static_url_path = app.static_url_path
+            
+            # Check key static files
+            key_files = [
+                'css/style.css',
+                'js/main.js',
+                'js/chat.js', 
+                'js/voice.js',
+                'data/languages.json'
+            ]
+            
+            file_status = {}
+            for file_path in key_files:
+                full_path = os.path.join(static_folder, file_path)
+                file_status[file_path] = {
+                    'exists': os.path.exists(full_path),
+                    'size': os.path.getsize(full_path) if os.path.exists(full_path) else 0,
+                    'url': f"{static_url_path}/{file_path}"
+                }
+            
+            return jsonify({
+                'static_folder': static_folder,
+                'static_url_path': static_url_path,
+                'files': file_status,
+                'environment': 'vercel' if os.environ.get('VERCEL') else 'local'
+            })
+        
+        app.add_url_rule('/debug-static', 'debug_static', debug_static)
+        
         # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
         
