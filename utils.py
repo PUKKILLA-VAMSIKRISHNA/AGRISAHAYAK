@@ -61,20 +61,22 @@ def generate_content_with_fallback(prompt):
     last_error = None
     for model_name in model_names:
         try:
+            print(f"Trying model: {model_name}")
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(prompt)
-            current_app.logger.debug(f"Successfully used Gemini model: {model_name}")
+            print(f"Successfully used Gemini model: {model_name}")
             return response
         except Exception as e:
             error_msg = str(e)
             last_error = e
+            print(f"Model {model_name} failed: {error_msg}")
             # Check if it's a 404 or model not found error
             if '404' in error_msg or 'not found' in error_msg.lower() or 'not supported' in error_msg.lower():
-                current_app.logger.debug(f"Model {model_name} not available: {error_msg}")
+                print(f"Model {model_name} not available: {error_msg}")
                 continue
             else:
                 # For other errors, log and re-raise
-                current_app.logger.error(f"Error with model {model_name}: {error_msg}")
+                print(f"Error with model {model_name}: {error_msg}")
                 raise
     
     # If all models failed, raise the last error
@@ -111,13 +113,25 @@ def translate_text(text, target_language):
         language_name = next((lang['name'] for lang in languages if lang['code'] == target_language), target_language)
         
         print(f"Translating to {language_name} (code: {target_language})")
+        print(f"Original text: {text}")
+        print(f"GEMINI_API_KEY available: {'YES' if GEMINI_API_KEY else 'NO'}")
+        
         prompt = f"Translate the following text to {language_name}. Return only the translated text without any explanations:\n\n{text}"
+        print(f"Prompt: {prompt}")
         
-        response = generate_content_with_fallback(prompt)
-        
-        translated_text = response.text.strip()
-        print(f"Translation result: {translated_text[:100]}...")
-        return translated_text
+        try:
+            response = generate_content_with_fallback(prompt)
+            print(f"Response received: {type(response)}")
+            if hasattr(response, 'text'):
+                translated_text = response.text.strip()
+                print(f"Translation result: {translated_text[:100]}...")
+                return translated_text
+            else:
+                print(f"Invalid response type: {response}")
+                return text
+        except Exception as e:
+            print(f"Error in translation: {str(e)}")
+            return text
     
     except Exception as e:
         current_app.logger.error(f"Translation error: {str(e)}")
