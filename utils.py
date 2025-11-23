@@ -61,22 +61,20 @@ def generate_content_with_fallback(prompt):
     last_error = None
     for model_name in model_names:
         try:
-            print(f"Trying model: {model_name}")
             model = genai.GenerativeModel(model_name)
             response = model.generate_content(prompt)
-            print(f"Successfully used Gemini model: {model_name}")
+            current_app.logger.debug(f"Successfully used Gemini model: {model_name}")
             return response
         except Exception as e:
             error_msg = str(e)
             last_error = e
-            print(f"Model {model_name} failed: {error_msg}")
             # Check if it's a 404 or model not found error
             if '404' in error_msg or 'not found' in error_msg.lower() or 'not supported' in error_msg.lower():
-                print(f"Model {model_name} not available: {error_msg}")
+                current_app.logger.debug(f"Model {model_name} not available: {error_msg}")
                 continue
             else:
                 # For other errors, log and re-raise
-                print(f"Error with model {model_name}: {error_msg}")
+                current_app.logger.error(f"Error with model {model_name}: {error_msg}")
                 raise
     
     # If all models failed, raise the last error
@@ -96,12 +94,12 @@ def translate_text(text, target_language):
         GEMINI_API_KEY = current_app.config['GEMINI_API_KEY']
         genai.configure(api_key=GEMINI_API_KEY)
         
-        # Load language data using embedded static files
+        # Load language data to get the full language name
+        json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
         try:
-            import static_files
-            languages_json = static_files.get_languages_json()
-            languages = json.loads(languages_json)
-        except (ImportError, json.JSONDecodeError):
+            with open(json_path, 'r', encoding='utf-8') as f:
+                languages = json.load(f)
+        except FileNotFoundError:
             # Fallback languages if file not found
             languages = [
                 {"code": "en", "name": "English", "native_name": "English"},
@@ -112,26 +110,12 @@ def translate_text(text, target_language):
         
         language_name = next((lang['name'] for lang in languages if lang['code'] == target_language), target_language)
         
-        print(f"Translating to {language_name} (code: {target_language})")
-        print(f"Original text: {text}")
-        print(f"GEMINI_API_KEY available: {'YES' if GEMINI_API_KEY else 'NO'}")
-        
         prompt = f"Translate the following text to {language_name}. Return only the translated text without any explanations:\n\n{text}"
-        print(f"Prompt: {prompt}")
         
-        try:
-            response = generate_content_with_fallback(prompt)
-            print(f"Response received: {type(response)}")
-            if hasattr(response, 'text'):
-                translated_text = response.text.strip()
-                print(f"Translation result: {translated_text[:100]}...")
-                return translated_text
-            else:
-                print(f"Invalid response type: {response}")
-                return text
-        except Exception as e:
-            print(f"Error in translation: {str(e)}")
-            return text
+        response = generate_content_with_fallback(prompt)
+        
+        translated_text = response.text.strip()
+        return translated_text
     
     except Exception as e:
         current_app.logger.error(f"Translation error: {str(e)}")

@@ -23,18 +23,6 @@ logging.basicConfig(level=logging.DEBUG)
 # Create Flask app - enable static serving
 # Try static folder first (created by build.py), fallback to public
 static_folder = 'static' if os.path.exists('static') else 'public'
-
-# If static folder doesn't exist or is empty, copy from public
-if not os.path.exists(static_folder) or not os.listdir(static_folder):
-    if os.path.exists('public'):
-        import shutil
-        if os.path.exists('static'):
-            shutil.rmtree('static')
-        shutil.copytree('public', 'static')
-        print(f"Copied public folder to {static_folder}")
-    else:
-        static_folder = 'public'
-
 app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
 
 # Configure static file serving for Vercel
@@ -536,116 +524,7 @@ def setup_app(app):
         
         app.add_url_rule('/debug-images', 'debug_images', debug_images)
         
-        # Add debug route to check static files
-        def debug_static_files():
-            import os
-            static_folder = app.static_folder
-            static_url_path = app.static_url_path
-            
-            # Check key static files
-            key_files = [
-                'css/style.css',
-                'js/main.js',
-                'js/chat.js', 
-                'js/voice.js',
-                'data/languages.json'
-            ]
-            
-            file_status = {}
-            for file_path in key_files:
-                full_path = os.path.join(static_folder, file_path)
-                file_status[file_path] = {
-                    'exists': os.path.exists(full_path),
-                    'size': os.path.getsize(full_path) if os.path.exists(full_path) else 0,
-                    'url': f"{static_url_path}/{file_path}"
-                }
-            
-            return jsonify({
-                'static_folder': static_folder,
-                'static_url_path': static_url_path,
-                'files': file_status,
-                'environment': 'vercel' if os.environ.get('VERCEL') else 'local'
-            })
-        
-        app.add_url_rule('/debug-static-files', 'debug_static_files', debug_static_files)
-        
-        # Add debug route to see what files exist in deployment
-        def debug_deployment():
-            import os
-            import json
-            
-            # List all files in the deployment
-            all_files = []
-            for root, dirs, files in os.walk('.'):
-                level = root.replace('.', '').count(os.sep)
-                indent = '  ' * level
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    size = os.path.getsize(file_path)
-                    all_files.append({
-                        'path': file_path,
-                        'size': size,
-                        'type': 'file'
-                    })
-                for dir in dirs:
-                    dir_path = os.path.join(root, dir)
-                    all_files.append({
-                        'path': dir_path,
-                        'size': 0,
-                        'type': 'directory'
-                    })
-            
-            # Check specific directories
-            checks = {
-                'public_exists': os.path.exists('public'),
-                'static_exists': os.path.exists('static'),
-                'public_contents': os.listdir('public') if os.path.exists('public') else [],
-                'static_contents': os.listdir('static') if os.path.exists('static') else [],
-                'current_dir': os.getcwd(),
-                'all_files': all_files[:50]  # Limit to first 50 files
-            }
-            
-            return jsonify(checks)
-        
-        app.add_url_rule('/debug-deployment', 'debug_deployment', debug_deployment)
-        
-        # Import static files module
-        import static_files
-        
-        # Add routes for specific static files using embedded content
-        def serve_css_style():
-            from flask import Response
-            content = static_files.get_css_style_css()
-            return Response(content, mimetype='text/css')
-        
-        def serve_js_main():
-            from flask import Response
-            content = static_files.get_js_main_js()
-            return Response(content, mimetype='application/javascript')
-        
-        def serve_js_chat():
-            from flask import Response
-            content = static_files.get_js_chat_js()
-            return Response(content, mimetype='application/javascript')
-        
-        def serve_js_voice():
-            from flask import Response
-            content = static_files.get_js_voice_js()
-            return Response(content, mimetype='application/javascript')
-        
-        def serve_languages_json():
-            from flask import Response
-            content = static_files.get_languages_json()
-            return Response(content, mimetype='application/json')
-        
-        # Register specific static file routes
-        app.add_url_rule('/static/css/style.css', 'css_style', serve_css_style)
-        app.add_url_rule('/static/js/main.js', 'js_main', serve_js_main)
-        app.add_url_rule('/static/js/chat.js', 'js_chat', serve_js_chat)
-        app.add_url_rule('/static/js/voice.js', 'js_voice', serve_js_voice)
-        app.add_url_rule('/static/data/languages.json', 'languages_json', serve_languages_json)
-        
-        # Keep the general static route for other files
+        # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
         
         # Add a simple index route that doesn't require database
