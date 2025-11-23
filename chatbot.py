@@ -1,13 +1,16 @@
-import os
 import json
-import requests
-import google.generativeai as genai
+import os
 from flask import current_app
 
 # Load crop data
 def load_crop_data():
-    with open('public/data/crops.json', 'r', encoding='utf-8') as f:
-        return json.load(f)
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'crops.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        # Return empty crop data if file not found
+        return {}
 
 def generate_content_with_fallback(prompt):
     """
