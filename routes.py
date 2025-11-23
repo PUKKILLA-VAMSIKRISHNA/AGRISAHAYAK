@@ -1,4 +1,5 @@
 import json
+import os
 from flask import render_template, redirect, url_for, flash, request, jsonify, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
@@ -114,7 +115,8 @@ def register():
             return render_template('register.html')
     
     # Load available languages
-    with open('public/data/languages.json', 'r', encoding='utf-8') as f:
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
         languages = json.load(f)
     
     return render_template('register.html', languages=languages)
@@ -243,7 +245,8 @@ def chat(chat_id):
     messages = Message.query.filter_by(chat_id=chat.id).order_by(Message.created_at).all()
     
     # Load available languages
-    with open('public/data/languages.json', 'r', encoding='utf-8') as f:
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
         languages = json.load(f)
     
     return render_template('chat.html', chat=chat, messages=messages, languages=languages)
@@ -386,7 +389,8 @@ def profile():
         return redirect(url_for('profile'))
     
     # Load available languages
-    with open('public/data/languages.json', 'r', encoding='utf-8') as f:
+    json_path = os.path.join(os.path.dirname(__file__), 'public', 'data', 'languages.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
         languages = json.load(f)
     
     return render_template('profile.html', profile=profile, languages=languages)
