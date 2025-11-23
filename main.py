@@ -502,11 +502,28 @@ def setup_app(app):
                 print(f"Error serving public file {filename}: {e}")
                 return f"Public file {filename} not found", 404
         
+        # Add direct image serving route FIRST (before catch-all)
+        app.add_url_rule('/images/<path:filename>', 'serve_images', serve_images)
+        
+        # Add debug route to check image paths
+        def debug_images():
+            import os
+            images_dir = os.path.join(app.static_folder, 'images')
+            debug_info = {
+                'static_folder': app.static_folder,
+                'images_dir': images_dir,
+                'images_dir_exists': os.path.exists(images_dir),
+                'image_files': []
+            }
+            if os.path.exists(images_dir):
+                for file in os.listdir(images_dir):
+                    debug_info['image_files'].append(file)
+            return jsonify(debug_info)
+        
+        app.add_url_rule('/debug-images', 'debug_images', debug_images)
+        
         # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
-        
-        # Add direct image serving route
-        app.add_url_rule('/images/<path:filename>', 'serve_images', serve_images)
         
         # Add a simple index route that doesn't require database
         def simple_index():
