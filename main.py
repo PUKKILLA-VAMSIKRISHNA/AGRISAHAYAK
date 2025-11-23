@@ -525,7 +525,7 @@ def setup_app(app):
         app.add_url_rule('/debug-images', 'debug_images', debug_images)
         
         # Add debug route to check static files
-        def debug_static():
+        def debug_static_files():
             import os
             static_folder = app.static_folder
             static_url_path = app.static_url_path
@@ -555,7 +555,7 @@ def setup_app(app):
                 'environment': 'vercel' if os.environ.get('VERCEL') else 'local'
             })
         
-        app.add_url_rule('/debug-static', 'debug_static', debug_static)
+        app.add_url_rule('/debug-static-files', 'debug_static_files', debug_static_files)
         
         # Always add static file route for Vercel
         app.add_url_rule('/static/<path:filename>', 'static_file', serve_static_file)
